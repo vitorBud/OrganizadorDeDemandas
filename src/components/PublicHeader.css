@@ -1,0 +1,28 @@
+.public-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 24px;
+  border-bottom: 1px solid var(--border);
+  background: var(--bg);
+  position: sticky;
+  top: 0;
+  z-index: 10;
+}
+
+.public-header__brand {
+  font-weight: 600;
+  font-size: 1.125rem;
+  color: var(--text-h);
+  text-decoration: none;
+}
+
+.public-header__brand:hover {
+  color: var(--accent);
+}
+
+.public-header__nav {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+}

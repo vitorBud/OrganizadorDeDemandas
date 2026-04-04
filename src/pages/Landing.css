@@ -1,0 +1,80 @@
+.landing {
+  min-height: 100svh;
+  display: flex;
+  flex-direction: column;
+}
+
+.landing__main {
+  flex: 1;
+  max-width: 900px;
+  margin: 0 auto;
+  padding: 48px 24px 80px;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.landing__hero {
+  text-align: center;
+  margin-bottom: 56px;
+}
+
+.landing__eyebrow {
+  font-size: 0.875rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--accent);
+  margin: 0 0 12px;
+  font-weight: 500;
+}
+
+.landing__title {
+  font-size: clamp(1.75rem, 4vw, 2.5rem);
+  line-height: 1.2;
+  margin: 0 0 20px;
+  letter-spacing: -0.02em;
+}
+
+.landing__lead {
+  font-size: 1.05rem;
+  line-height: 1.65;
+  max-width: 640px;
+  margin: 0 auto 28px;
+  text-align: left;
+}
+
+.landing__cta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  justify-content: center;
+}
+
+.landing__features {
+  display: grid;
+  gap: 20px;
+  text-align: left;
+}
+
+@media (min-width: 700px) {
+  .landing__features {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+.landing__card {
+  padding: 20px;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: var(--code-bg);
+}
+
+.landing__card h2 {
+  font-size: 1rem;
+  margin-bottom: 8px;
+}
+
+.landing__card p {
+  font-size: 0.95rem;
+  line-height: 1.5;
+  margin: 0;
+}

@@ -1,0 +1,135 @@
+.workspace__title {
+  font-size: 1.75rem;
+  margin: 0 0 8px;
+  text-align: left;
+}
+
+.workspace__intro {
+  text-align: left;
+  margin: 0 0 20px;
+  max-width: 640px;
+  line-height: 1.55;
+}
+
+.workspace__error {
+  margin: 0 0 16px;
+  padding: 10px 12px;
+  border-radius: 8px;
+  background: rgba(220, 38, 38, 0.12);
+  color: #dc2626;
+  font-size: 0.9rem;
+  text-align: left;
+}
+
+@media (prefers-color-scheme: dark) {
+  .workspace__error {
+    color: #fca5a5;
+    background: rgba(220, 38, 38, 0.2);
+  }
+}
+
+.workspace__grid {
+  display: grid;
+  gap: 20px;
+  margin-bottom: 40px;
+}
+
+@media (min-width: 640px) {
+  .workspace__grid {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+.workspace__panel {
+  text-align: left;
+  padding: 20px;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: var(--code-bg);
+}
+
+.workspace__panel h2 {
+  font-size: 1.05rem;
+  margin: 0 0 16px;
+}
+
+.workspace__form {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.workspace__form label {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: var(--text-h);
+}
+
+.workspace__input {
+  font: inherit;
+  padding: 10px 12px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--bg);
+  color: var(--text-h);
+}
+
+.workspace__input--code {
+  font-family: var(--mono);
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+.workspace__list-section {
+  text-align: left;
+}
+
+.workspace__list-section h2 {
+  font-size: 1.05rem;
+  margin: 0 0 12px;
+}
+
+.workspace__empty {
+  color: var(--text);
+  margin: 0;
+}
+
+.workspace__list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.workspace__link {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 14px 16px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  text-decoration: none;
+  color: inherit;
+  transition: box-shadow 0.2s, border-color 0.2s;
+}
+
+.workspace__link:hover {
+  border-color: var(--accent-border);
+  box-shadow: var(--shadow);
+}
+
+.workspace__link-name {
+  font-weight: 600;
+  color: var(--text-h);
+}
+
+.workspace__link-code {
+  font-size: 0.85rem;
+  font-family: var(--mono);
+  color: var(--text);
+}
