@@ -46,13 +46,10 @@
   }
 }
 
-/* Design language inspired by Anthropic “Frontend Aesthetics” cookbook:
-   distinctive type, cohesive palette, layered backgrounds, CSS motion */
-
 :root {
-  --font-display: 'Fraunces', 'Georgia', 'Times New Roman', serif;
-  --font-sans: 'Outfit', system-ui, sans-serif;
-  --font-mono: 'JetBrains Mono', ui-monospace, monospace;
+  --font-display: ui-serif, Georgia, 'Times New Roman', serif;
+  --font-sans: system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --font-mono: ui-monospace, 'Cascadia Code', 'SFMono-Regular', Menlo, monospace;
 
   --text: #57534e;
   --text-h: #1c1917;
@@ -162,11 +159,7 @@ body {
   position: fixed;
   inset: 0;
   z-index: -1;
-  background:
-    radial-gradient(ellipse 100% 70% at 50% -15%, var(--glow-a), transparent 52%),
-    radial-gradient(ellipse 55% 45% at 105% 35%, var(--glow-b), transparent 48%),
-    radial-gradient(ellipse 40% 35% at -5% 80%, var(--glow-a), transparent 50%),
-    var(--bg-page);
+  background: var(--bg-page);
   pointer-events: none;
 }
 
@@ -279,4 +272,9 @@ code {
   padding: 13px 26px;
   font-size: 1.02rem;
   border-radius: var(--radius-md);
+}
+
+.btn--header {
+  padding: 8px 14px;
+  font-size: 0.875rem;
 }

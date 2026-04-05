@@ -1,6 +1,5 @@
 import { useEffect, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
-import { LiquidButton } from '@/components/ui/liquid-glass-button'
 import { PublicHeader } from '../components/PublicHeader'
 import { useAuth } from '../context/AuthContext'
 import './AuthForm.css'
@@ -91,13 +90,9 @@ export function Register() {
                 className="auth-form__input"
               />
             </label>
-            <LiquidButton
-              type="submit"
-              size="lg"
-              className="auth-form__submit !w-full !border-primary/35 !bg-primary !text-primary-foreground"
-            >
+            <button type="submit" className="btn btn--primary auth-form__submit">
               Criar conta
-            </LiquidButton>
+            </button>
           </form>
           <p className="auth-card__footer">
             Já tem conta? <Link to="/login">Entrar</Link>

@@ -7,7 +7,6 @@ import { Login } from './pages/Login'
 import { Register } from './pages/Register'
 import { Workspace } from './pages/Workspace'
 import { ProjectBoard } from './pages/ProjectBoard'
-import { LiquidDemo } from './pages/LiquidDemo'
 import './App.css'
 
 export default function App() {
@@ -18,7 +17,6 @@ export default function App() {
           <Route path="/" element={<Landing />} />
           <Route path="/login" element={<Login />} />
           <Route path="/cadastro" element={<Register />} />
-          <Route path="/demo/liquid" element={<LiquidDemo />} />
           <Route
             path="/app"
             element={

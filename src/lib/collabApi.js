@@ -149,25 +149,36 @@ export async function joinProjectByCode(userId, code) {
     return project
   }
 
-  const { data: projectId, error } = await supabase.rpc('join_project_by_code', {
-    p_code: trimmed,
+  const { data, error } = await supabase.rpc('join_project_by_code', {
+    invite_code: trimmed,
   })
 
   if (error) {
-    if (error.message?.includes('Código') || error.code === 'P0001') {
+    const msg = error.message || ''
+    const code = error.code || ''
+    if (code === '42883' || msg.includes('join_project_by_code')) {
+      throw new Error(
+        'Função de entrada não encontrada no Supabase. Rode o SQL em supabase/collab_setup.sql no painel.'
+      )
+    }
+    if (msg.includes('Código') || code === 'P0001') {
       throw new Error('Código inválido ou sala não encontrada.')
     }
-    throw new Error(error.message || 'Não foi possível entrar na sala.')
+    throw new Error(msg || 'Não foi possível entrar na sala.')
   }
 
-  const { data: proj, error: fetchErr } = await supabase
-    .from('projects')
-    .select('id, name, join_code, owner_id, updated_at')
-    .eq('id', projectId)
-    .single()
-
-  if (fetchErr) throw fetchErr
-  return mapProjectRow(proj)
+  let row = data
+  if (typeof row === 'string') {
+    try {
+      row = JSON.parse(row)
+    } catch {
+      throw new Error('Resposta inválida do servidor.')
+    }
+  }
+  if (!row || typeof row !== 'object' || !row.id) {
+    throw new Error('Não foi possível obter os dados do projeto após entrar na sala.')
+  }
+  return mapProjectRow(row)
 }
 
 /**

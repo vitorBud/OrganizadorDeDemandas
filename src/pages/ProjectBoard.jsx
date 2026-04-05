@@ -1,6 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { Link, useNavigate, useParams } from 'react-router-dom'
-import { LiquidButton } from '@/components/ui/liquid-glass-button'
 import { useAuth } from '../context/AuthContext'
 import {
   getProjectIfMember,
@@ -219,15 +218,9 @@ export function ProjectBoard() {
           <div className="project-board__code-row">
             <span className="project-board__code-label">Código da sala</span>
             <code className="project-board__code">{project.joinCode}</code>
-            <LiquidButton
-              type="button"
-              size="sm"
-              variant="outline"
-              className="!bg-background/80 !text-foreground"
-              onClick={copyCode}
-            >
+            <button type="button" className="btn btn--ghost btn--sm" onClick={copyCode}>
               {copied ? 'Copiado!' : 'Copiar'}
-            </LiquidButton>
+            </button>
           </div>
         </div>
       </div>
@@ -236,15 +229,15 @@ export function ProjectBoard() {
         <section className="project-board__canvas" aria-label="Quadro do projeto">
           <div className="project-board__toolbar">
             <span className="project-board__toolbar-label">Adicionar bloco:</span>
-            <LiquidButton type="button" size="sm" variant="outline" onClick={() => addBlock('text')}>
+            <button type="button" className="btn btn--ghost btn--sm" onClick={() => addBlock('text')}>
               Texto
-            </LiquidButton>
-            <LiquidButton type="button" size="sm" variant="outline" onClick={() => addBlock('image')}>
+            </button>
+            <button type="button" className="btn btn--ghost btn--sm" onClick={() => addBlock('image')}>
               Imagem
-            </LiquidButton>
-            <LiquidButton type="button" size="sm" variant="outline" onClick={() => addBlock('code')}>
+            </button>
+            <button type="button" className="btn btn--ghost btn--sm" onClick={() => addBlock('code')}>
               Código
-            </LiquidButton>
+            </button>
           </div>
 
           {blocks.length === 0 ? (
@@ -410,13 +403,9 @@ export function ProjectBoard() {
               rows={2}
               className="project-board__chat-input"
             />
-            <LiquidButton
-              type="submit"
-              size="sm"
-              className="!border-primary/35 !bg-primary !text-primary-foreground"
-            >
+            <button type="submit" className="btn btn--primary btn--sm">
               Enviar
-            </LiquidButton>
+            </button>
           </form>
         </aside>
       </div>
