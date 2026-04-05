@@ -3,6 +3,18 @@
   text-align: center;
 }
 
+.project-board__live-banner {
+  margin: 0 0 16px;
+  padding: 10px 14px;
+  font-size: 0.875rem;
+  line-height: 1.45;
+  text-align: left;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--accent-border);
+  background: var(--accent-bg);
+  color: var(--text-h);
+}
+
 .project-board__top {
   margin-bottom: 20px;
   text-align: left;

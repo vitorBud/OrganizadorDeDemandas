@@ -1,35 +1,53 @@
-import { useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import {
-  getProjects,
-  saveProjects,
-  generateId,
-  generateJoinCode,
-} from '../lib/storage'
+  createProjectRemote,
+  isRemoteCollab,
+  joinProjectByCode,
+  listProjects,
+} from '../lib/collabApi'
 import './Workspace.css'
-
-function loadMyProjects(userId) {
-  const all = getProjects()
-  return all.filter((p) => p.memberIds?.includes(userId))
-}
 
 export function Workspace() {
   const { userId } = useAuth()
   const navigate = useNavigate()
-  const [projects, setProjects] = useState(() => loadMyProjects(userId))
+  const [projects, setProjects] = useState([])
+  const [loading, setLoading] = useState(true)
   const [newName, setNewName] = useState('')
   const [joinCode, setJoinCode] = useState('')
   const [error, setError] = useState('')
+  const remote = isRemoteCollab()
 
-  const refresh = () => setProjects(loadMyProjects(userId))
+  const refresh = useCallback(async () => {
+    if (!userId) return
+    try {
+      const list = await listProjects(userId)
+      setProjects(list)
+    } catch (e) {
+      console.error(e)
+      setError(e?.message || 'Erro ao carregar projetos.')
+    }
+  }, [userId])
+
+  useEffect(() => {
+    let alive = true
+    ;(async () => {
+      setLoading(true)
+      await refresh()
+      if (alive) setLoading(false)
+    })()
+    return () => {
+      alive = false
+    }
+  }, [refresh])
 
   const sorted = useMemo(
     () => [...projects].sort((a, b) => (b.updatedAt || 0) - (a.updatedAt || 0)),
     [projects]
   )
 
-  function handleCreate(e) {
+  async function handleCreate(e) {
     e.preventDefault()
     setError('')
     const name = newName.trim()
@@ -37,27 +55,17 @@ export function Workspace() {
       setError('Digite um nome para o projeto.')
       return
     }
-    const all = getProjects()
-    let code = generateJoinCode()
-    while (all.some((p) => p.joinCode === code)) code = generateJoinCode()
-    const project = {
-      id: generateId(),
-      name,
-      joinCode: code,
-      ownerId: userId,
-      memberIds: [userId],
-      blocks: [],
-      messages: [],
-      updatedAt: Date.now(),
+    try {
+      const project = await createProjectRemote(userId, name)
+      setNewName('')
+      await refresh()
+      navigate(`/app/projeto/${project.id}`)
+    } catch (err) {
+      setError(err?.message || 'Não foi possível criar o projeto.')
     }
-    all.push(project)
-    saveProjects(all)
-    setNewName('')
-    refresh()
-    navigate(`/app/projeto/${project.id}`)
   }
 
-  function handleJoin(e) {
+  async function handleJoin(e) {
     e.preventDefault()
     setError('')
     const code = joinCode.trim().toUpperCase()
@@ -65,28 +73,33 @@ export function Workspace() {
       setError('Informe o código de entrada.')
       return
     }
-    const all = getProjects()
-    const project = all.find((p) => p.joinCode?.toUpperCase() === code)
-    if (!project) {
-      setError('Nenhum projeto encontrado com esse código.')
-      return
+    try {
+      const project = await joinProjectByCode(userId, code)
+      setJoinCode('')
+      await refresh()
+      navigate(`/app/projeto/${project.id}`)
+    } catch (err) {
+      setError(err?.message || 'Não foi possível entrar com esse código.')
     }
-    if (!project.memberIds.includes(userId)) {
-      project.memberIds = [...project.memberIds, userId]
-      project.updatedAt = Date.now()
-      saveProjects(all)
-    }
-    setJoinCode('')
-    refresh()
-    navigate(`/app/projeto/${project.id}`)
   }
 
   return (
     <div className="workspace">
       <h1 className="workspace__title">Área de trabalho</h1>
       <p className="workspace__intro">
-        Crie um projeto novo ou entre em um existente com o código que seu colega
-        compartilhou. Tudo fica salvo neste navegador (demonstração local).
+        {remote ? (
+          <>
+            Crie uma sala ou entre com o <strong>código</strong> que o colega passou. Com o Supabase
+            ativo, várias pessoas editam o mesmo quadro e o chat em <strong>tempo real</strong>{' '}
+            (ative Realtime nas tabelas <code>blocks</code> e <code>messages</code> no painel).
+          </>
+        ) : (
+          <>
+            Modo <strong>local</strong> (sem variáveis do Supabase): dados só neste navegador. Para
+            sala compartilhada de verdade, configure <code>VITE_SUPABASE_URL</code> e{' '}
+            <code>VITE_SUPABASE_ANON_KEY</code> e rode o SQL em <code>supabase/collab_setup.sql</code>.
+          </>
+        )}
       </p>
 
       {error ? <p className="workspace__error">{error}</p> : null}
@@ -104,7 +117,7 @@ export function Workspace() {
                 className="workspace__input"
               />
             </label>
-            <button type="submit" className="btn btn--primary">
+            <button type="submit" className="btn btn--primary" disabled={loading}>
               Criar e abrir
             </button>
           </form>
@@ -123,8 +136,8 @@ export function Workspace() {
                 maxLength={8}
               />
             </label>
-            <button type="submit" className="btn btn--primary">
-              Entrar no projeto
+            <button type="submit" className="btn btn--primary" disabled={loading}>
+              Entrar na sala
             </button>
           </form>
         </section>
@@ -132,7 +145,9 @@ export function Workspace() {
 
       <section className="workspace__list-section">
         <h2>Meus projetos</h2>
-        {sorted.length === 0 ? (
+        {loading ? (
+          <p className="workspace__empty">Carregando…</p>
+        ) : sorted.length === 0 ? (
           <p className="workspace__empty">Nenhum projeto ainda. Crie um ou entre com um código.</p>
         ) : (
           <ul className="workspace__list">

@@ -20,10 +20,10 @@ export function Login() {
 
   if (isAuthenticated) return null
 
-  function handleSubmit(e) {
+  async function handleSubmit(e) {
     e.preventDefault()
     setError('')
-    const result = login(email, password)
+    const result = await login(email, password)
     if (!result.ok) {
       setError(result.error)
       return

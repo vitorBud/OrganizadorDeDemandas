@@ -1,93 +1,157 @@
-import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { Link, useNavigate, useParams } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
-import { getProjects, saveProjects, generateId } from '../lib/storage'
+import {
+  getProjectIfMember,
+  isRemoteCollab,
+  newRemoteId,
+  persistProjectState,
+  sendMessageRemote,
+  subscribeProjectChannels,
+} from '../lib/collabApi'
+import { generateId } from '../lib/storage'
 import './ProjectBoard.css'
 
-function findProject(id) {
-  return getProjects().find((p) => p.id === id) ?? null
-}
-
-function cloneProject(p) {
-  return {
-    ...p,
-    blocks: [...(p.blocks || [])],
-    messages: [...(p.messages || [])],
-    memberIds: [...(p.memberIds || [])],
-  }
-}
+const SAVE_DEBOUNCE_MS = 480
 
 export function ProjectBoard() {
   const { projectId } = useParams()
   const { user, userId } = useAuth()
   const navigate = useNavigate()
-  const [storageTick, setStorageTick] = useState(0)
+  const [project, setProject] = useState(null)
   const [chatDraft, setChatDraft] = useState('')
   const [copied, setCopied] = useState(false)
-
-  const project = useMemo(() => {
-    if (!projectId) return null
-    const p = findProject(projectId)
-    if (!p || !p.memberIds?.includes(userId)) return null
-    return cloneProject(p)
-  }, [projectId, userId, storageTick]) // eslint-disable-line react-hooks/exhaustive-deps -- storageTick invalidates snapshot after localStorage writes
+  const debounceTimerRef = useRef(null)
+  const lastWriteRef = useRef(0)
+  const projectRef = useRef(null)
+  const remote = isRemoteCollab()
 
   useEffect(() => {
-    if (!projectId) {
+    projectRef.current = project
+  }, [project])
+
+  const reload = useCallback(async () => {
+    if (!projectId || !userId) return
+    const p = await getProjectIfMember(projectId, userId)
+    if (!p) {
       navigate('/app', { replace: true })
       return
     }
-    const p = findProject(projectId)
-    if (!p || !p.memberIds?.includes(userId)) {
-      navigate('/app', { replace: true })
-    }
-  }, [projectId, userId, navigate, storageTick])
+    setProject(p)
+  }, [projectId, userId, navigate])
 
-  const persist = useCallback(
-    (next) => {
-      const all = getProjects()
-      const i = all.findIndex((p) => p.id === projectId)
-      if (i === -1) return
-      all[i] = {
-        ...all[i],
-        ...next,
-        updatedAt: Date.now(),
+  useEffect(() => {
+    if (!projectId || !userId) {
+      navigate('/app', { replace: true })
+      return
+    }
+    let cancelled = false
+    ;(async () => {
+      const p = await getProjectIfMember(projectId, userId)
+      if (cancelled) return
+      if (!p) {
+        navigate('/app', { replace: true })
+        return
       }
-      saveProjects(all)
-      setStorageTick((t) => t + 1)
+      setProject(p)
+    })()
+    return () => {
+      cancelled = true
+    }
+  }, [projectId, userId, navigate])
+
+  useEffect(() => {
+    if (!remote || !projectId) return
+    return subscribeProjectChannels(projectId, () => {
+      if (Date.now() - lastWriteRef.current < 780) return
+      void reload()
+    })
+  }, [remote, projectId, reload])
+
+  useEffect(
+    () => () => {
+      if (debounceTimerRef.current) clearTimeout(debounceTimerRef.current)
+    },
+    []
+  )
+
+  const runSave = useCallback(
+    async (blocks) => {
+      if (!projectId) return
+      try {
+        lastWriteRef.current = Date.now()
+        await persistProjectState(projectId, { blocks })
+      } catch (e) {
+        console.error(e)
+      }
     },
     [projectId]
   )
 
-  const blocks = project?.blocks ?? []
+  const scheduleSave = useCallback(
+    (blocks) => {
+      if (!remote) {
+        void runSave(blocks)
+        return
+      }
+      if (debounceTimerRef.current) clearTimeout(debounceTimerRef.current)
+      debounceTimerRef.current = setTimeout(() => {
+        debounceTimerRef.current = null
+        void runSave(blocks)
+      }, SAVE_DEBOUNCE_MS)
+    },
+    [remote, runSave]
+  )
+
+  const flushSave = useCallback(
+    async (blocks) => {
+      if (debounceTimerRef.current) {
+        clearTimeout(debounceTimerRef.current)
+        debounceTimerRef.current = null
+      }
+      await runSave(blocks)
+    },
+    [runSave]
+  )
+
+  const newBlockId = () => (remote ? newRemoteId() : generateId())
 
   const addBlock = (type) => {
-    const id = generateId()
+    if (!project) return
+    const id = newBlockId()
     const base = { id, type }
     if (type === 'text') Object.assign(base, { content: '', align: 'left', size: 'md' })
     if (type === 'image') Object.assign(base, { content: '' })
     if (type === 'code') Object.assign(base, { content: '', language: '' })
-    persist({ blocks: [...blocks, base] })
+    const blocks = [...(project.blocks || []), base]
+    setProject({ ...project, blocks })
+    scheduleSave(blocks)
   }
 
   const updateBlock = (id, patch) => {
-    persist({
-      blocks: blocks.map((b) => (b.id === id ? { ...b, ...patch } : b)),
-    })
+    if (!project) return
+    const blocks = project.blocks.map((b) => (b.id === id ? { ...b, ...patch } : b))
+    setProject({ ...project, blocks })
+    scheduleSave(blocks)
   }
 
   const removeBlock = (id) => {
-    persist({ blocks: blocks.filter((b) => b.id !== id) })
+    if (!project) return
+    const blocks = project.blocks.filter((b) => b.id !== id)
+    setProject({ ...project, blocks })
+    void flushSave(blocks)
   }
 
   const moveBlock = (id, dir) => {
+    if (!project) return
+    const blocks = [...project.blocks]
     const idx = blocks.findIndex((b) => b.id === id)
     if (idx < 0) return
     const j = dir === 'up' ? idx - 1 : idx + 1
     if (j < 0 || j >= blocks.length) return
-    const next = [...blocks]
-    ;[next[idx], next[j]] = [next[j], next[idx]]
-    persist({ blocks: next })
+    ;[blocks[idx], blocks[j]] = [blocks[j], blocks[idx]]
+    setProject({ ...project, blocks })
+    void flushSave(blocks)
   }
 
   const handleImageFile = (blockId, file) => {
@@ -97,19 +161,21 @@ export function ProjectBoard() {
     reader.readAsDataURL(file)
   }
 
-  const sendChat = (e) => {
+  const sendChat = async (e) => {
     e.preventDefault()
     const text = chatDraft.trim()
-    if (!text || !user) return
-    const msg = {
-      id: generateId(),
-      userId,
-      userName: user.name,
-      text,
-      createdAt: Date.now(),
+    if (!text || !user || !projectId) return
+    try {
+      await sendMessageRemote(projectId, {
+        userId,
+        userName: user.name,
+        text,
+      })
+      setChatDraft('')
+      await reload()
+    } catch (err) {
+      console.error(err)
     }
-    persist({ messages: [...(project.messages || []), msg] })
-    setChatDraft('')
   }
 
   const copyCode = () => {
@@ -120,7 +186,11 @@ export function ProjectBoard() {
     })
   }
 
-  const messages = useMemo(() => [...(project?.messages || [])].sort((a, b) => a.createdAt - b.createdAt), [project])
+  const blocks = project?.blocks ?? []
+  const messages = useMemo(
+    () => [...(project?.messages || [])].sort((a, b) => a.createdAt - b.createdAt),
+    [project]
+  )
 
   if (!project) {
     return (
@@ -132,6 +202,13 @@ export function ProjectBoard() {
 
   return (
     <div className="project-board">
+      {remote ? (
+        <p className="project-board__live-banner">
+          Sala online: alterações e chat sincronizam entre quem está com o mesmo código (Realtime
+          ligado no Supabase).
+        </p>
+      ) : null}
+
       <div className="project-board__top">
         <Link to="/app" className="project-board__back">
           ← Área de trabalho
@@ -139,7 +216,7 @@ export function ProjectBoard() {
         <div className="project-board__head">
           <h1 className="project-board__title">{project.name}</h1>
           <div className="project-board__code-row">
-            <span className="project-board__code-label">Código de entrada</span>
+            <span className="project-board__code-label">Código da sala</span>
             <code className="project-board__code">{project.joinCode}</code>
             <button type="button" className="btn btn--ghost btn--sm" onClick={copyCode}>
               {copied ? 'Copiado!' : 'Copiar'}
@@ -236,6 +313,7 @@ export function ProjectBoard() {
                         style={{ textAlign: b.align || 'left' }}
                         value={b.content || ''}
                         onChange={(e) => updateBlock(b.id, { content: e.target.value })}
+                        onBlur={() => void flushSave(projectRef.current?.blocks ?? [])}
                         placeholder="Escreva anotações, demandas ou checklists…"
                         rows={4}
                       />
@@ -261,7 +339,13 @@ export function ProjectBoard() {
                         <button
                           type="button"
                           className="btn btn--ghost btn--sm block-card__replace"
-                          onClick={() => updateBlock(b.id, { content: '' })}
+                          onClick={() => {
+                            const blocks = (projectRef.current?.blocks ?? []).map((x) =>
+                              x.id === b.id ? { ...x, content: '' } : x
+                            )
+                            setProject((prev) => (prev ? { ...prev, blocks } : prev))
+                            void flushSave(blocks)
+                          }}
                         >
                           Trocar imagem
                         </button>
@@ -285,6 +369,7 @@ export function ProjectBoard() {
                         className="block-card__code"
                         value={b.content || ''}
                         onChange={(e) => updateBlock(b.id, { content: e.target.value })}
+                        onBlur={() => void flushSave(projectRef.current?.blocks ?? [])}
                         placeholder="Cole ou digite código aqui…"
                         rows={8}
                         spellCheck={false}

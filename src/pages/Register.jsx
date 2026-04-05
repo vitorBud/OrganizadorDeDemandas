@@ -12,6 +12,7 @@ export function Register() {
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [error, setError] = useState('')
+  const [info, setInfo] = useState('')
 
   useEffect(() => {
     if (isAuthenticated) navigate('/app', { replace: true })
@@ -19,16 +20,21 @@ export function Register() {
 
   if (isAuthenticated) return null
 
-  function handleSubmit(e) {
+  async function handleSubmit(e) {
     e.preventDefault()
     setError('')
-    if (password.length < 4) {
-      setError('Use uma senha com pelo menos 4 caracteres.')
+    setInfo('')
+    if (password.length < 6) {
+      setError('Use uma senha com pelo menos 6 caracteres.')
       return
     }
-    const result = register(name, email, password)
+    const result = await register(name, email, password)
     if (!result.ok) {
       setError(result.error)
+      return
+    }
+    if (result.needsEmailConfirm) {
+      setInfo(result.message || 'Verifique seu e-mail para confirmar a conta.')
       return
     }
     navigate('/app', { replace: true })
@@ -45,6 +51,11 @@ export function Register() {
           </p>
           <form onSubmit={handleSubmit} className="auth-form">
             {error ? <p className="auth-form__error">{error}</p> : null}
+            {info ? (
+              <p className="auth-form__error" style={{ background: 'var(--accent-bg)', color: 'var(--text-h)' }}>
+                {info}
+              </p>
+            ) : null}
             <label className="auth-form__label">
               Nome
               <input
@@ -75,7 +86,7 @@ export function Register() {
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 required
-                minLength={4}
+                minLength={6}
                 className="auth-form__input"
               />
             </label>
