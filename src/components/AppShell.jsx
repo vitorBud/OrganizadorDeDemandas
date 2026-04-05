@@ -1,4 +1,5 @@
 import { Link, Outlet, useNavigate } from 'react-router-dom'
+import { LiquidButton } from '@/components/ui/liquid-glass-button'
 import { useAuth } from '../context/AuthContext'
 import './AppShell.css'
 
@@ -6,8 +7,8 @@ export function AppShell() {
   const { user, logout } = useAuth()
   const navigate = useNavigate()
 
-  function handleLogout() {
-    logout()
+  async function handleLogout() {
+    await logout()
     navigate('/')
   }
 
@@ -19,9 +20,15 @@ export function AppShell() {
         </Link>
         <div className="app-shell__actions">
           <span className="app-shell__user">{user?.name}</span>
-          <button type="button" className="btn btn--ghost btn--sm" onClick={handleLogout}>
+          <LiquidButton
+            type="button"
+            size="sm"
+            variant="outline"
+            className="!border-border !bg-background/80 !text-foreground"
+            onClick={() => void handleLogout()}
+          >
             Sair
-          </button>
+          </LiquidButton>
         </div>
       </header>
       <div className="app-shell__body">

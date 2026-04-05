@@ -98,7 +98,9 @@
 .auth-form__submit {
   margin-top: 6px;
   width: 100%;
+  max-width: 100%;
   justify-content: center;
+  box-sizing: border-box;
 }
 
 .auth-card__footer {

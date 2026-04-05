@@ -1,8 +1,11 @@
-import { Link } from 'react-router-dom'
+import { useNavigate } from 'react-router-dom'
+import { LiquidButton } from '@/components/ui/liquid-glass-button'
 import { PublicHeader } from '../components/PublicHeader'
 import './Landing.css'
 
 export function Landing() {
+  const navigate = useNavigate()
+
   return (
     <div className="landing">
       <PublicHeader />
@@ -18,13 +21,36 @@ export function Landing() {
             editem juntos blocos de texto, imagens e trechos de código — com chat integrado
             para alinhar tudo em tempo real no mesmo painel.
           </p>
+
+          <div className="landing__cta landing__cta--primary">
+            <LiquidButton
+              type="button"
+              size="xl"
+              className="landing__liquid-main !border-primary/40 !bg-primary/15 !text-foreground shadow-md"
+              onClick={() => navigate('/login')}
+            >
+              Entrar na minha conta
+            </LiquidButton>
+          </div>
+
           <div className="landing__cta">
-            <Link to="/cadastro" className="btn btn--primary btn--lg">
+            <LiquidButton
+              type="button"
+              size="lg"
+              className="!min-w-[11rem] !border-primary/35 !bg-primary !text-primary-foreground"
+              onClick={() => navigate('/cadastro')}
+            >
               Criar conta grátis
-            </Link>
-            <Link to="/login" className="btn btn--ghost btn--lg">
-              Já tenho conta
-            </Link>
+            </LiquidButton>
+            <LiquidButton
+              type="button"
+              size="lg"
+              variant="outline"
+              className="!min-w-[11rem] !border-border !bg-background/70 !text-foreground"
+              onClick={() => navigate('/demo/liquid')}
+            >
+              Ver demo glass
+            </LiquidButton>
           </div>
         </section>
 

@@ -1,5 +1,5 @@
 import { Droplets, Sparkles } from 'lucide-react'
-import { Link } from 'react-router-dom'
+import { useNavigate } from 'react-router-dom'
 
 import {
   Button,
@@ -9,6 +9,8 @@ import {
 
 /** Demo route: shadcn-style UI + liquid glass / metal buttons */
 export function LiquidDemo() {
+  const navigate = useNavigate()
+
   return (
     <div className="relative min-h-svh w-full overflow-hidden">
       <img
@@ -20,12 +22,15 @@ export function LiquidDemo() {
 
       <div className="relative z-10 mx-auto flex min-h-svh max-w-4xl flex-col gap-10 px-6 py-10">
         <div className="flex flex-wrap items-center justify-between gap-4">
-          <Link
-            to="/"
-            className="text-sm font-medium text-white/90 underline-offset-4 hover:underline"
+          <LiquidButton
+            type="button"
+            size="sm"
+            variant="outline"
+            className="!border-white/30 !bg-white/10 !text-white"
+            onClick={() => navigate('/')}
           >
-            ← Voltar
-          </Link>
+            ← Voltar ao início
+          </LiquidButton>
           <p className="text-sm text-white/80">
             Demo dos componentes em <code className="rounded bg-white/10 px-1">@/components/ui</code>
           </p>

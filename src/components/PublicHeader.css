@@ -28,6 +28,12 @@
 
 .public-header__nav {
   display: flex;
+  flex-wrap: wrap;
   gap: 10px;
   align-items: center;
+  justify-content: flex-end;
+}
+
+.public-header__glass {
+  font-weight: 600 !important;
 }

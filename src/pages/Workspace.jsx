@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
+import { LiquidButton } from '@/components/ui/liquid-glass-button'
 import { useAuth } from '../context/AuthContext'
 import {
   createProjectRemote,
@@ -117,9 +118,14 @@ export function Workspace() {
                 className="workspace__input"
               />
             </label>
-            <button type="submit" className="btn btn--primary" disabled={loading}>
+            <LiquidButton
+              type="submit"
+              size="default"
+              className="!border-primary/35 !bg-primary !text-primary-foreground"
+              disabled={loading}
+            >
               Criar e abrir
-            </button>
+            </LiquidButton>
           </form>
         </section>
 
@@ -136,9 +142,14 @@ export function Workspace() {
                 maxLength={8}
               />
             </label>
-            <button type="submit" className="btn btn--primary" disabled={loading}>
+            <LiquidButton
+              type="submit"
+              size="default"
+              className="!border-primary/35 !bg-primary !text-primary-foreground"
+              disabled={loading}
+            >
               Entrar na sala
-            </button>
+            </LiquidButton>
           </form>
         </section>
       </div>

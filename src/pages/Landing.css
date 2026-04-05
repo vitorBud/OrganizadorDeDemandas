@@ -61,6 +61,17 @@
   flex-wrap: wrap;
   gap: 14px;
   justify-content: center;
+  align-items: center;
+}
+
+.landing__cta--primary {
+  animation-delay: 0.22s;
+  margin-bottom: 16px;
+}
+
+.landing__liquid-main {
+  min-width: min(100%, 280px);
+  font-weight: 700 !important;
 }
 
 .landing__features {
