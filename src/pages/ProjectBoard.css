@@ -21,7 +21,10 @@
 }
 
 .project-board__title {
-  font-size: 1.5rem;
+  font-family: var(--font-display);
+  font-size: clamp(1.35rem, 2.5vw, 1.65rem);
+  font-weight: 700;
+  letter-spacing: -0.02em;
   margin: 0 0 10px;
 }
 
@@ -38,7 +41,7 @@
 }
 
 .project-board__code {
-  font-family: var(--mono);
+  font-family: var(--font-mono);
   font-size: 1rem;
   padding: 6px 12px;
   background: var(--code-bg);
@@ -70,10 +73,13 @@
   align-items: center;
   gap: 8px;
   margin-bottom: 16px;
-  padding: 12px;
+  padding: 14px;
   border: 1px solid var(--border);
-  border-radius: 10px;
-  background: var(--code-bg);
+  border-radius: var(--radius-md);
+  background: color-mix(in srgb, var(--surface) 88%, transparent);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  box-shadow: var(--shadow);
 }
 
 .project-board__toolbar-label {
@@ -84,12 +90,13 @@
 }
 
 .project-board__hint {
-  color: var(--text);
+  color: var(--text-muted);
   margin: 0;
-  padding: 24px;
-  border: 1px dashed var(--border);
-  border-radius: 10px;
+  padding: 28px;
+  border: 1px dashed var(--accent-border);
+  border-radius: var(--radius-md);
   text-align: center;
+  background: color-mix(in srgb, var(--accent-bg) 40%, transparent);
 }
 
 .project-board__blocks {
@@ -103,9 +110,17 @@
 
 .block-card {
   border: 1px solid var(--border);
-  border-radius: 12px;
-  padding: 12px;
-  background: var(--bg);
+  border-radius: var(--radius-md);
+  padding: 14px;
+  background: color-mix(in srgb, var(--surface) 92%, transparent);
+  box-shadow: var(--shadow);
+  transition:
+    border-color 0.2s ease,
+    box-shadow 0.2s ease;
+}
+
+.block-card:focus-within {
+  border-color: var(--accent-border);
 }
 
 .block-card__controls {
@@ -238,7 +253,7 @@
 .block-card__code {
   width: 100%;
   box-sizing: border-box;
-  font-family: var(--mono);
+  font-family: var(--font-mono);
   font-size: 0.85rem;
   line-height: 1.45;
   padding: 12px;
@@ -252,16 +267,19 @@
 
 .project-board__chat {
   border: 1px solid var(--border);
-  border-radius: 12px;
-  padding: 16px;
-  background: var(--code-bg);
+  border-radius: var(--radius-md);
+  padding: 18px;
+  background: color-mix(in srgb, var(--code-bg) 85%, var(--surface));
   display: flex;
   flex-direction: column;
   max-height: min(70vh, 640px);
+  box-shadow: var(--shadow);
 }
 
 .project-board__chat-title {
-  font-size: 1rem;
+  font-family: var(--font-display);
+  font-size: 1.05rem;
+  font-weight: 600;
   margin: 0 0 12px;
 }
 
@@ -291,7 +309,7 @@
 .project-board__msg-author {
   font-size: 0.8rem;
   font-weight: 600;
-  color: var(--accent);
+  color: var(--accent-hot);
 }
 
 .project-board__msg-text {

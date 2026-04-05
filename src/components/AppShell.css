@@ -8,18 +8,24 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 12px 20px;
+  padding: 14px clamp(18px, 3vw, 28px);
   border-bottom: 1px solid var(--border);
-  background: var(--bg);
+  background: color-mix(in srgb, var(--surface) 78%, transparent);
+  backdrop-filter: blur(14px) saturate(1.2);
+  -webkit-backdrop-filter: blur(14px) saturate(1.2);
   position: sticky;
   top: 0;
   z-index: 10;
 }
 
 .app-shell__brand {
-  font-weight: 600;
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 1.1rem;
+  letter-spacing: -0.02em;
   color: var(--text-h);
   text-decoration: none;
+  transition: color 0.2s ease;
 }
 
 .app-shell__brand:hover {
@@ -29,17 +35,18 @@
 .app-shell__actions {
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: 14px;
 }
 
 .app-shell__user {
   font-size: 0.9rem;
-  color: var(--text);
+  color: var(--text-muted);
+  font-weight: 500;
 }
 
 .app-shell__body {
   flex: 1;
-  padding: 24px 20px 40px;
+  padding: 28px 20px 48px;
   max-width: 1200px;
   margin: 0 auto;
   width: 100%;

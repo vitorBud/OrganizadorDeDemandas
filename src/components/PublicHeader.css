@@ -2,19 +2,24 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 16px 24px;
+  padding: 18px clamp(20px, 4vw, 32px);
   border-bottom: 1px solid var(--border);
-  background: var(--bg);
+  background: color-mix(in srgb, var(--surface) 78%, transparent);
+  backdrop-filter: blur(14px) saturate(1.2);
+  -webkit-backdrop-filter: blur(14px) saturate(1.2);
   position: sticky;
   top: 0;
   z-index: 10;
 }
 
 .public-header__brand {
-  font-weight: 600;
-  font-size: 1.125rem;
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 1.2rem;
+  letter-spacing: -0.02em;
   color: var(--text-h);
   text-decoration: none;
+  transition: color 0.2s ease;
 }
 
 .public-header__brand:hover {
