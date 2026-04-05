@@ -6,10 +6,9 @@ import {
   generateJoinCode,
 } from './storage'
 
+/** Verdadeiro só quando o cliente Supabase foi criado (URL + anon key no build). */
 export function isRemoteCollab() {
-  const url = import.meta.env.VITE_SUPABASE_URL
-  const key = import.meta.env.VITE_SUPABASE_ANON_KEY
-  return Boolean(url && key)
+  return !!supabase
 }
 
 /** UUID para blocos/mensagens no modo Supabase */
@@ -313,7 +312,7 @@ export async function sendMessageRemote(projectId, msg) {
  * @param {(payload: { blocks?: boolean, messages?: boolean }) => void} onChange
  */
 export function subscribeProjectChannels(projectId, onChange) {
-  if (!isRemoteCollab()) return () => {}
+  if (!isRemoteCollab() || !supabase) return () => {}
 
   const channel = supabase
     .channel(`room:${projectId}`)

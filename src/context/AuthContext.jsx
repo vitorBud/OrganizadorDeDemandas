@@ -19,6 +19,7 @@ import {
 const AuthContext = createContext(null)
 
 export function AuthProvider({ children }) {
+  /** Modo Supabase só quando `createClient` foi possível (env no build). */
   const remote = isRemoteCollab()
   const [userId, setUserId] = useState(() => (remote ? null : getSessionUserId()))
   const [remoteUser, setRemoteUser] = useState(null)
@@ -31,7 +32,7 @@ export function AuthProvider({ children }) {
   }, [remote, userId])
 
   useEffect(() => {
-    if (!remote) return
+    if (!remote || !supabase) return
 
     let cancelled = false
 
@@ -86,7 +87,7 @@ export function AuthProvider({ children }) {
 
   const login = useCallback(
     async (email, password) => {
-      if (remote) {
+      if (remote && supabase) {
         const { error } = await supabase.auth.signInWithPassword({
           email: email.trim(),
           password,
@@ -108,7 +109,7 @@ export function AuthProvider({ children }) {
 
   const register = useCallback(
     async (name, email, password) => {
-      if (remote) {
+      if (remote && supabase) {
         const { data, error } = await supabase.auth.signUp({
           email: email.trim(),
           password,
@@ -146,7 +147,7 @@ export function AuthProvider({ children }) {
   )
 
   const logout = useCallback(async () => {
-    if (remote) {
+    if (remote && supabase) {
       await supabase.auth.signOut()
       setRemoteUser(null)
       setUserId(null)
