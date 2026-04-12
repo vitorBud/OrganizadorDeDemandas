@@ -39,6 +39,7 @@ No Supabase: **SQL Editor**, rode **nesta ordem** (cada arquivo completo, de uma
 | 2     | `collab_setup.sql` | função `join_project_by_code`      |
 | 3     | `tasks_schema.sql` | Kanban, comentários, histórico, notificações |
 | (opcional) | `create_project_rpc.sql` | Se criar projeto falhar com erro de RLS, rode este arquivo (o app usa a função automaticamente). |
+| (recomendado) | `messages_enhancements.sql` | Nome no chat (`sender_name`) + `REPLICA IDENTITY FULL` para o Realtime das mensagens. |
 
 Se algum `CREATE` falhar dizendo que já existe, você pode estar repetindo script em projeto já configurado — ajuste só o que faltar.
 
@@ -61,6 +62,8 @@ alter publication supabase_realtime add table public.blocks;
 alter publication supabase_realtime add table public.messages;
 alter publication supabase_realtime add table public.projects;
 ```
+
+**Chat em tempo real:** inclua `public.messages` na publicação acima e rode `messages_enhancements.sql`. Sem isso, mensagens novas podem só aparecer após F5.
 
 ## 6. Deploy (ex.: Vercel)
 

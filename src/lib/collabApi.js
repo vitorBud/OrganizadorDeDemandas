@@ -251,7 +251,7 @@ export async function getProjectIfMember(projectId, userId) {
 
   const { data: msgRows } = await supabase
     .from('messages')
-    .select('id, text, created_at, user_id')
+    .select('*')
     .eq('project_id', projectId)
     .order('created_at', { ascending: true })
 
@@ -263,13 +263,18 @@ export async function getProjectIfMember(projectId, userId) {
   }
 
   const blocks = (blockRows ?? []).map(mapBlockRow)
-  const messages = (msgRows ?? []).map((m) => ({
-    id: m.id,
-    userId: m.user_id,
-    userName: nameMap[m.user_id] ?? 'Colega',
-    text: m.text,
-    createdAt: new Date(m.created_at).getTime(),
-  }))
+  const messages = (msgRows ?? []).map((m) => {
+    const fromProfile = nameMap[m.user_id]?.trim()
+    const fromSender = m.sender_name?.trim()
+    const userName = fromProfile || fromSender || 'Colega'
+    return {
+      id: m.id,
+      userId: m.user_id,
+      userName,
+      text: m.text,
+      createdAt: new Date(m.created_at).getTime(),
+    }
+  })
 
   const base = mapProjectRow(proj)
   return { ...base, blocks, messages }
@@ -340,17 +345,23 @@ export async function sendMessageRemote(projectId, msg) {
     return
   }
 
-  const { error } = await supabase.from('messages').insert({
+  const row = {
     project_id: projectId,
     user_id: msg.userId,
     text: msg.text,
-  })
+    sender_name: msg.userName?.trim() || null,
+  }
+  let { error } = await supabase.from('messages').insert(row)
+  if (error && /sender_name|column/i.test(String(error.message || ''))) {
+    const { project_id, user_id, text } = row
+    ;({ error } = await supabase.from('messages').insert({ project_id, user_id, text }))
+  }
   if (error) throw error
 }
 
 /**
  * @param {string} projectId
- * @param {(payload: { blocks?: boolean, messages?: boolean }) => void} onChange
+ * @param {(payload: { blocks?: boolean, messages?: boolean, project?: boolean }) => void} onChange
  */
 export function subscribeProjectChannels(projectId, onChange) {
   if (!isRemoteCollab() || !supabase) return () => {}
@@ -364,7 +375,7 @@ export function subscribeProjectChannels(projectId, onChange) {
     )
     .on(
       'postgres_changes',
-      { event: '*', schema: 'public', table: 'messages', filter: `project_id=eq.${projectId}` },
+      { event: 'INSERT', schema: 'public', table: 'messages', filter: `project_id=eq.${projectId}` },
       () => onChange({ messages: true })
     )
     .on(
@@ -372,7 +383,12 @@ export function subscribeProjectChannels(projectId, onChange) {
       { event: 'UPDATE', schema: 'public', table: 'projects', filter: `id=eq.${projectId}` },
       () => onChange({ project: true })
     )
-    .subscribe()
+    .subscribe((status, err) => {
+      if (status === 'SUBSCRIBED') return
+      if (status === 'CHANNEL_ERROR' || status === 'TIMED_OUT') {
+        console.warn('[OrgDemandas] Realtime:', status, err?.message ?? err ?? '')
+      }
+    })
 
   return () => {
     supabase.removeChannel(channel)

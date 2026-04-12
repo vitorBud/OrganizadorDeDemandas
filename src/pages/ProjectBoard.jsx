@@ -78,7 +78,11 @@ export function ProjectBoard() {
 
   useEffect(() => {
     if (!remote || !projectId) return
-    return subscribeProjectChannels(projectId, () => {
+    return subscribeProjectChannels(projectId, (payload) => {
+      if (payload?.messages) {
+        void reload()
+        return
+      }
       if (Date.now() - lastWriteRef.current < 780) return
       void reload()
     })
