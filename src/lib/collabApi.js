@@ -108,6 +108,32 @@ export async function createProjectRemote(userId, name) {
     return project
   }
 
+  const { data: rpcData, error: rpcError } = await supabase.rpc('create_project', {
+    p_name: name,
+  })
+
+  if (!rpcError && rpcData != null) {
+    let row = rpcData
+    if (typeof row === 'string') {
+      try {
+        row = JSON.parse(row)
+      } catch {
+        row = null
+      }
+    }
+    if (row && typeof row === 'object' && row.id) {
+      return mapProjectRow(row)
+    }
+  }
+
+  const rpcMissing =
+    rpcError &&
+    (rpcError.code === '42883' ||
+      String(rpcError.message || '').toLowerCase().includes('create_project'))
+  if (rpcError && !rpcMissing) {
+    throw rpcError
+  }
+
   let joinCode = generateJoinCode()
   for (let i = 0; i < 8; i++) {
     const { data: exists } = await supabase

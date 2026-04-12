@@ -38,6 +38,7 @@ No Supabase: **SQL Editor**, rode **nesta ordem** (cada arquivo completo, de uma
 | 1     | `core_schema.sql`  | `profiles`, `projects`, membros, `blocks`, `messages`, RLS |
 | 2     | `collab_setup.sql` | função `join_project_by_code`      |
 | 3     | `tasks_schema.sql` | Kanban, comentários, histórico, notificações |
+| (opcional) | `create_project_rpc.sql` | Se criar projeto falhar com erro de RLS, rode este arquivo (o app usa a função automaticamente). |
 
 Se algum `CREATE` falhar dizendo que já existe, você pode estar repetindo script em projeto já configurado — ajuste só o que faltar.
 

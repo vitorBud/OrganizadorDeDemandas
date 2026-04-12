@@ -216,6 +216,17 @@ export async function loadKanbanBundle(projectId, userId) {
 /**
  * @param {string} userId
  */
+function isMissingTableError(error) {
+  if (!error) return false
+  const msg = String(error.message || '')
+  const code = error.code || ''
+  return (
+    code === 'PGRST205' ||
+    code === '42P01' ||
+    /could not find the table|schema cache|does not exist|404/i.test(msg)
+  )
+}
+
 export async function listMyNotifications(userId, limit = 40) {
   if (!isRemoteCollab() || !supabase) return []
   const { data, error } = await supabase
@@ -224,7 +235,10 @@ export async function listMyNotifications(userId, limit = 40) {
     .eq('user_id', userId)
     .order('created_at', { ascending: false })
     .limit(limit)
-  if (error) throw error
+  if (error) {
+    if (isMissingTableError(error)) return []
+    throw error
+  }
   return (data ?? []).map(mapNotifRow)
 }
 
@@ -240,7 +254,7 @@ export async function markNotificationsRead(userId, ids) {
     .update({ read_at: new Date().toISOString() })
     .eq('user_id', userId)
     .in('id', ids)
-  if (error) throw error
+  if (error && !isMissingTableError(error)) throw error
 }
 
 async function insertNotificationRemote({ userId, projectId, taskId, kind, title, body }) {
