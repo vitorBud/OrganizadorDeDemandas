@@ -1,5 +1,6 @@
 import { supabase } from './supabaseClient'
 import { isRemoteCollab } from './collabApi'
+import { fetchProfilesDisplayMapByIds } from './profileRemote'
 import { normalizeAccentColor } from './userColor'
 import { getProjects, saveProjects, generateId, getUsers } from './storage'
 
@@ -109,15 +110,7 @@ function mapNotifRow(row) {
 }
 
 async function profileDisplayMap(userIds) {
-  const ids = [...new Set((userIds || []).filter(Boolean))]
-  if (ids.length === 0) return {}
-  const { data } = await supabase.from('profiles').select('id, name, accent_color').in('id', ids)
-  return Object.fromEntries(
-    (data ?? []).map((p) => [
-      p.id,
-      { name: p.name ?? '', accentColor: normalizeAccentColor(p.accent_color) },
-    ])
-  )
+  return fetchProfilesDisplayMapByIds(userIds)
 }
 
 function localUserAccent(userId) {
@@ -171,17 +164,7 @@ export async function listProjectMembers(projectId, userId) {
     .eq('project_id', projectId)
   if (mErr) throw mErr
   const ids = [...new Set((mems ?? []).map((m) => m.user_id))]
-  const { data: profs, error: pErr } = await supabase
-    .from('profiles')
-    .select('id, name, accent_color')
-    .in('id', ids)
-  if (pErr) throw pErr
-  const map = Object.fromEntries(
-    (profs ?? []).map((p) => [
-      p.id,
-      { name: p.name ?? 'Usuário', accentColor: normalizeAccentColor(p.accent_color) },
-    ])
-  )
+  const map = await fetchProfilesDisplayMapByIds(ids)
   return ids.map((id) => {
     const row = map[id]
     return { id, name: row?.name ?? 'Usuário', email: '', accentColor: row?.accentColor ?? null }

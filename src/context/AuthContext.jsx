@@ -15,6 +15,7 @@ import {
   setSessionUserId,
   generateId,
 } from '../lib/storage'
+import { fetchMyProfileRow, updateProfileAccentColorRemote } from '../lib/profileRemote'
 import { normalizeAccentColor } from '../lib/userColor'
 
 const AuthContext = createContext(null)
@@ -40,16 +41,10 @@ export function AuthProvider({ children }) {
 
     async function loadProfile(uid) {
       let data = null
-      const q1 = await supabase
-        .from('profiles')
-        .select('name, accent_color')
-        .eq('id', uid)
-        .maybeSingle()
-      if (!q1.error) {
-        data = q1.data
-      } else if (/accent_color|schema cache|column/i.test(String(q1.error?.message || ''))) {
-        const q2 = await supabase.from('profiles').select('name').eq('id', uid).maybeSingle()
-        if (!q2.error) data = q2.data
+      try {
+        data = await fetchMyProfileRow(uid)
+      } catch (e) {
+        console.warn('[OrgDemandas] Perfil:', e?.message || e)
       }
       if (cancelled) return
       const { data: { user } } = await supabase.auth.getUser()
@@ -184,14 +179,8 @@ export function AuthProvider({ children }) {
       if (!clear && !normalized) return { ok: false, error: 'Cor inválida.' }
 
       if (remote && supabase) {
-        const { error } = await supabase
-          .from('profiles')
-          .update({
-            accent_color: normalized,
-            updated_at: new Date().toISOString(),
-          })
-          .eq('id', userId)
-        if (error) return { ok: false, error: error.message || 'Erro ao guardar.' }
+        const r = await updateProfileAccentColorRemote(userId, normalized)
+        if (!r.ok) return { ok: false, error: r.error }
         setRemoteUser((u) => (u ? { ...u, accentColor: normalized } : u))
         return { ok: true }
       }

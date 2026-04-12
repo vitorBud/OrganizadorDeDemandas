@@ -1,4 +1,5 @@
 import { supabase } from './supabaseClient'
+import { fetchProfilesDisplayMapByIds } from './profileRemote'
 import { normalizeAccentColor } from './userColor'
 import {
   getProjects,
@@ -266,19 +267,7 @@ export async function getProjectIfMember(projectId, userId) {
   const userIds = [...new Set((msgRows ?? []).map((m) => m.user_id).filter(Boolean))]
   let profileMap = {}
   if (userIds.length > 0) {
-    const { data: profs } = await supabase
-      .from('profiles')
-      .select('id, name, accent_color')
-      .in('id', userIds)
-    profileMap = Object.fromEntries(
-      (profs ?? []).map((p) => [
-        p.id,
-        {
-          name: p.name,
-          accentColor: normalizeAccentColor(p.accent_color),
-        },
-      ])
-    )
+    profileMap = await fetchProfilesDisplayMapByIds(userIds)
   }
 
   const blocks = (blockRows ?? []).map(mapBlockRow)
