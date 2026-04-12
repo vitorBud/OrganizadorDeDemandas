@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
-import { Link, useNavigate, useParams } from 'react-router-dom'
+import { Link, useNavigate, useParams, useSearchParams } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import {
   getProjectIfMember,
@@ -10,6 +10,7 @@ import {
   subscribeProjectChannels,
 } from '../lib/collabApi'
 import { generateId } from '../lib/storage'
+import { KanbanBoard } from '../components/KanbanBoard'
 import './ProjectBoard.css'
 
 const SAVE_DEBOUNCE_MS = 480
@@ -25,6 +26,21 @@ export function ProjectBoard() {
   const lastWriteRef = useRef(0)
   const projectRef = useRef(null)
   const remote = isRemoteCollab()
+  const [params, setParams] = useSearchParams()
+  const [workspaceTab, setWorkspaceTab] = useState('demandas')
+  const openTaskId = params.get('task')
+
+  const setOpenTaskId = useCallback(
+    (id) => {
+      const next = new URLSearchParams(params)
+      if (id) next.set('task', id)
+      else next.delete('task')
+      setParams(next, { replace: true })
+    },
+    [params, setParams]
+  )
+
+  const displayTab = openTaskId ? 'demandas' : workspaceTab
 
   useEffect(() => {
     projectRef.current = project
@@ -225,7 +241,44 @@ export function ProjectBoard() {
         </div>
       </div>
 
+      <div className="project-board__tabs" role="tablist" aria-label="Visualização do projeto">
+        <button
+          type="button"
+          role="tab"
+          aria-selected={displayTab === 'demandas'}
+          className={`project-board__tab${displayTab === 'demandas' ? ' project-board__tab--active' : ''}`}
+          onClick={() => setWorkspaceTab('demandas')}
+        >
+          Demandas (Kanban)
+        </button>
+        <button
+          type="button"
+          role="tab"
+          aria-selected={displayTab === 'documento'}
+          className={`project-board__tab${displayTab === 'documento' ? ' project-board__tab--active' : ''}`}
+          onClick={() => {
+            setWorkspaceTab('documento')
+            if (openTaskId) {
+              const next = new URLSearchParams(params)
+              next.delete('task')
+              setParams(next, { replace: true })
+            }
+          }}
+        >
+          Documento livre
+        </button>
+      </div>
+
       <div className="project-board__layout">
+        <div className="project-board__main">
+          {displayTab === 'demandas' ? (
+            <KanbanBoard
+              projectId={projectId}
+              user={user}
+              openTaskId={openTaskId}
+              onOpenTaskId={setOpenTaskId}
+            />
+          ) : (
         <section className="project-board__canvas" aria-label="Quadro do projeto">
           <div className="project-board__toolbar">
             <span className="project-board__toolbar-label">Adicionar bloco:</span>
@@ -381,6 +434,8 @@ export function ProjectBoard() {
             </ul>
           )}
         </section>
+          )}
+        </div>
 
         <aside className="project-board__chat" aria-label="Chat do projeto">
           <h2 className="project-board__chat-title">Chat</h2>

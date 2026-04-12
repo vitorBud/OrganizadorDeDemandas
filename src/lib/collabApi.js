@@ -97,6 +97,10 @@ export async function createProjectRemote(userId, name) {
       memberIds: [userId],
       blocks: [],
       messages: [],
+      tasks: [],
+      taskComments: [],
+      taskActivity: [],
+      appNotifications: [],
       updatedAt: Date.now(),
     }
     all.push(project)

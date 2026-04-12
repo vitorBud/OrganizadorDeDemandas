@@ -15,6 +15,20 @@
   color: var(--text);
 }
 
+.workspace__dashboard-link {
+  margin-bottom: -8px;
+}
+
+.workspace__dashboard-link a {
+  font-weight: 600;
+  color: var(--accent);
+  text-decoration: none;
+}
+
+.workspace__dashboard-link a:hover {
+  text-decoration: underline;
+}
+
 .workspace__error {
   margin: 0 0 18px;
   padding: 11px 14px;

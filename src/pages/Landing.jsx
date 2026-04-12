@@ -8,11 +8,12 @@ export function Landing() {
       <PublicHeader />
       <main className="landing__main">
         <section className="landing__hero">
-          <h1 className="landing__title">Um quadro para demandas e conversa com o time</h1>
+          <p className="landing__badge">Kanban · tempo real · equipes</p>
+          <h1 className="landing__title">Demandas claras. Time alinhado. Menos ruído.</h1>
           <p className="landing__lead">
-            Você cria um projeto, recebe um código e quem precisar entra no mesmo painel:
-            blocos de texto, imagem ou código, mais um chat que fica junto — sem troca de aba
-            nem planilha solta.
+            Projetos com código de sala, quadro Kanban com prazos e responsáveis, documento livre e
+            chat no mesmo lugar — o fluxo que você esperaria de uma ferramenta profissional, sem
+            excesso de complexidade.
           </p>
           <div className="landing__cta">
             <Link to="/cadastro" className="btn btn--primary btn--lg">

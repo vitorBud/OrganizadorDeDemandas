@@ -1,4 +1,5 @@
 import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom'
+import { ThemeProvider } from './context/ThemeContext'
 import { AuthProvider } from './context/AuthContext'
 import { ProtectedRoute } from './components/ProtectedRoute'
 import { AppShell } from './components/AppShell'
@@ -7,12 +8,14 @@ import { Login } from './pages/Login'
 import { Register } from './pages/Register'
 import { Workspace } from './pages/Workspace'
 import { ProjectBoard } from './pages/ProjectBoard'
+import { Dashboard } from './pages/Dashboard'
 import './App.css'
 
 export default function App() {
   return (
     <BrowserRouter>
-      <AuthProvider>
+      <ThemeProvider>
+        <AuthProvider>
         <Routes>
           <Route path="/" element={<Landing />} />
           <Route path="/login" element={<Login />} />
@@ -26,11 +29,13 @@ export default function App() {
             }
           >
             <Route index element={<Workspace />} />
+            <Route path="dashboard" element={<Dashboard />} />
             <Route path="projeto/:projectId" element={<ProjectBoard />} />
           </Route>
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
-      </AuthProvider>
+        </AuthProvider>
+      </ThemeProvider>
     </BrowserRouter>
   )
 }

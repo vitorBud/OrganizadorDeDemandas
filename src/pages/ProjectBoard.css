@@ -62,6 +62,35 @@
   color: var(--text-h);
 }
 
+.project-board__tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 18px;
+}
+
+.project-board__tab {
+  font: inherit;
+  font-size: 0.9rem;
+  font-weight: 600;
+  padding: 8px 14px;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--border);
+  background: color-mix(in srgb, var(--surface) 90%, transparent);
+  color: var(--text-muted);
+  cursor: pointer;
+}
+
+.project-board__tab--active {
+  color: var(--text-h);
+  border-color: var(--accent-border);
+  background: var(--accent-bg);
+}
+
+.project-board__main {
+  min-width: 0;
+}
+
 .project-board__layout {
   display: grid;
   gap: 24px;

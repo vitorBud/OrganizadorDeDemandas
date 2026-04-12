@@ -5,9 +5,10 @@ const anonKey = import.meta.env.VITE_SUPABASE_ANON_KEY
 
 const configured = Boolean(url && anonKey)
 
-if (!configured) {
-  console.warn(
-    '[OrgDemandas] Defina VITE_SUPABASE_URL e VITE_SUPABASE_ANON_KEY no .env.local (dev) ou nas Environment Variables da Vercel (produção). Sem isso o app roda só em modo local.'
+// Aviso só em desenvolvimento (evita ruído no console em produção).
+if (!configured && import.meta.env.DEV) {
+  console.info(
+    '[OrgDemandas] Modo local: crie .env.local com VITE_SUPABASE_URL e VITE_SUPABASE_ANON_KEY para usar Supabase. Veja supabase/README.md.'
   )
 }
 

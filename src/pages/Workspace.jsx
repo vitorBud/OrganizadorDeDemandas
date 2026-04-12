@@ -86,6 +86,9 @@ export function Workspace() {
   return (
     <div className="workspace">
       <h1 className="workspace__title">Área de trabalho</h1>
+      <p className="workspace__intro workspace__dashboard-link">
+        <Link to="/app/dashboard">Abrir dashboard de métricas e exportação CSV →</Link>
+      </p>
       <p className="workspace__intro">
         {remote ? (
           <>
