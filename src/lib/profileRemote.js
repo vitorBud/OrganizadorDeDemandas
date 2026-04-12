@@ -1,27 +1,18 @@
 import { supabase } from './supabaseClient'
 import { normalizeAccentColor } from './userColor'
 
-/** Mensagem quando a coluna ainda não existe na base (rode profile_accent_color.sql). */
+/** Mensagem quando o pedido falha por a coluna ainda não existir na API (migração ou reload do schema). */
 export const ACCENT_COLUMN_MIGRATION_HINT =
-  'No Supabase, execute o ficheiro supabase/profile_accent_color.sql no SQL Editor (coluna profiles.accent_color).'
+  'Confirme que correu supabase/profile_accent_color.sql. No Supabase: Settings → API → reiniciar projeto ou aguarde o schema cache atualizar; depois atualize a página (F5).'
 
-let profilesSelectIncludesAccent = true
-
-export function isProfilesAccentColumnAvailable() {
-  return profilesSelectIncludesAccent
-}
-
-export function markProfilesAccentColumnUnavailable() {
-  profilesSelectIncludesAccent = false
-}
-
+/**
+ * Erro PostgREST típico: coluna em falta ou cache desatualizado a referir coluna em falta.
+ * Não usar "schema cache" sozinho — evita falsos positivos.
+ */
 function isMissingAccentColumnError(err) {
   const msg = String(err?.message || err?.details || err?.hint || '')
-  return (
-    /accent_color/i.test(msg) ||
-    /schema cache/i.test(msg) ||
-    /could not find.*column/i.test(msg)
-  )
+  if (!/accent_color/i.test(msg)) return false
+  return /could not find|schema cache|column|42703|does not exist/i.test(msg)
 }
 
 function mapProfileRows(data) {
@@ -37,6 +28,7 @@ function mapProfileRows(data) {
 }
 
 /**
+ * Sempre tenta incluir accent_color; se a API ainda não a expuser, repete só com name (sem “memória” entre pedidos).
  * @param {string[]} ids
  * @returns {Promise<Record<string, { name: string, accentColor: string | null }>>}
  */
@@ -44,11 +36,12 @@ export async function fetchProfilesDisplayMapByIds(ids) {
   const unique = [...new Set((ids || []).filter(Boolean))]
   if (unique.length === 0) return {}
 
-  const cols = profilesSelectIncludesAccent ? 'id, name, accent_color' : 'id, name'
-  let { data, error } = await supabase.from('profiles').select(cols).in('id', unique)
+  let { data, error } = await supabase
+    .from('profiles')
+    .select('id, name, accent_color')
+    .in('id', unique)
 
-  if (error && profilesSelectIncludesAccent && isMissingAccentColumnError(error)) {
-    markProfilesAccentColumnUnavailable()
+  if (error && isMissingAccentColumnError(error)) {
     ;({ data, error } = await supabase.from('profiles').select('id, name').in('id', unique))
   }
 
@@ -57,16 +50,17 @@ export async function fetchProfilesDisplayMapByIds(ids) {
 }
 
 /**
- * Uma linha de perfil (login / Auth).
  * @param {string} uid
  * @returns {Promise<{ name?: string, accent_color?: string | null } | null>}
  */
 export async function fetchMyProfileRow(uid) {
-  const cols = profilesSelectIncludesAccent ? 'name, accent_color' : 'name'
-  let { data, error } = await supabase.from('profiles').select(cols).eq('id', uid).maybeSingle()
+  let { data, error } = await supabase
+    .from('profiles')
+    .select('name, accent_color')
+    .eq('id', uid)
+    .maybeSingle()
 
-  if (error && profilesSelectIncludesAccent && isMissingAccentColumnError(error)) {
-    markProfilesAccentColumnUnavailable()
+  if (error && isMissingAccentColumnError(error)) {
     ;({ data, error } = await supabase.from('profiles').select('name').eq('id', uid).maybeSingle())
   }
 
@@ -75,18 +69,10 @@ export async function fetchMyProfileRow(uid) {
 }
 
 /**
- * Atualiza accent_color no remoto; falha com mensagem clara se a coluna não existir.
  * @param {string} userId
  * @param {string | null} normalizedHex null = limpar
  */
 export async function updateProfileAccentColorRemote(userId, normalizedHex) {
-  if (!profilesSelectIncludesAccent) {
-    if (normalizedHex == null) {
-      return { ok: true, skipped: true }
-    }
-    return { ok: false, error: ACCENT_COLUMN_MIGRATION_HINT }
-  }
-
   const patch =
     normalizedHex == null
       ? { accent_color: null, updated_at: new Date().toISOString() }
@@ -95,8 +81,6 @@ export async function updateProfileAccentColorRemote(userId, normalizedHex) {
   const { error } = await supabase.from('profiles').update(patch).eq('id', userId)
 
   if (error && isMissingAccentColumnError(error)) {
-    markProfilesAccentColumnUnavailable()
-    if (normalizedHex == null) return { ok: true, skipped: true }
     return { ok: false, error: ACCENT_COLUMN_MIGRATION_HINT }
   }
 
