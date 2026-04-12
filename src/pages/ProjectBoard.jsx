@@ -19,7 +19,7 @@ const SAVE_DEBOUNCE_MS = 480
 
 export function ProjectBoard() {
   const { projectId } = useParams()
-  const { user, userId } = useAuth()
+  const { user, userId, profilesRemoteTick } = useAuth()
   const navigate = useNavigate()
   const [project, setProject] = useState(null)
   const [chatDraft, setChatDraft] = useState('')
@@ -111,6 +111,14 @@ export function ProjectBoard() {
       document.removeEventListener('visibilitychange', onVis)
     }
   }, [remote, projectId, userId, reload])
+
+  useEffect(() => {
+    if (profilesRemoteTick === 0) return
+    if (!remote || !projectId || !userId) return
+    queueMicrotask(() => {
+      void reload()
+    })
+  }, [profilesRemoteTick, remote, projectId, userId, reload])
 
   useEffect(
     () => () => {

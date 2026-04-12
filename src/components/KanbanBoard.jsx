@@ -15,6 +15,7 @@ import {
   useSortable,
 } from '@dnd-kit/sortable'
 import { CSS } from '@dnd-kit/utilities'
+import { useAuth } from '../context/AuthContext'
 import { isRemoteCollab } from '../lib/collabApi'
 import { REMOTE_POLL_INTERVAL_MS } from '../lib/remoteSync'
 import { accentColorForDisplay } from '../lib/userColor'
@@ -139,6 +140,7 @@ function KanbanColumn({ statusId, label, children }) {
  * @param {(id: string | null) => void} props.onOpenTaskId
  */
 export function KanbanBoard({ projectId, user, openTaskId, onOpenTaskId }) {
+  const { profilesRemoteTick } = useAuth()
   const { id: userId, name: userName } = user
   const [tasks, setTasks] = useState([])
   const [comments, setComments] = useState([])
@@ -202,6 +204,14 @@ export function KanbanBoard({ projectId, user, openTaskId, onOpenTaskId }) {
       void reload()
     })
   }, [remote, projectId, reload])
+
+  useEffect(() => {
+    if (profilesRemoteTick === 0) return
+    if (!remote || !projectId || !userId) return
+    queueMicrotask(() => {
+      void reload()
+    })
+  }, [profilesRemoteTick, remote, projectId, userId, reload])
 
   useEffect(() => {
     if (!remote || !projectId) return

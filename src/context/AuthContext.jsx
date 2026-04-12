@@ -27,6 +27,8 @@ export function AuthProvider({ children }) {
   const [remoteUser, setRemoteUser] = useState(null)
   const [authReady, setAuthReady] = useState(!remote)
   const [localProfileTick, setLocalProfileTick] = useState(0)
+  /** Incrementa quando há mudança remota em public.profiles (ex.: cor de outro utilizador). */
+  const [profilesRemoteTick, setProfilesRemoteTick] = useState(0)
 
   useEffect(() => {
     if (!remote) {
@@ -86,6 +88,43 @@ export function AuthProvider({ children }) {
       subscription.unsubscribe()
     }
   }, [remote])
+
+  useEffect(() => {
+    if (!remote || !supabase || !userId) return
+    const channel = supabase
+      .channel('orgdemandas-profiles-sync')
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'profiles' },
+        (payload) => {
+          setProfilesRemoteTick((t) => t + 1)
+          const row = payload.new
+          if (row?.id === userId) {
+            setRemoteUser((u) =>
+              u
+                ? {
+                    ...u,
+                    name:
+                      row.name != null && String(row.name).trim() !== ''
+                        ? row.name
+                        : u.name,
+                    accentColor: normalizeAccentColor(row.accent_color) ?? null,
+                  }
+                : u
+            )
+          }
+        }
+      )
+      .subscribe((status, err) => {
+        if (status === 'SUBSCRIBED') return
+        if (status === 'CHANNEL_ERROR' || status === 'TIMED_OUT') {
+          console.warn('[OrgDemandas] Realtime (perfis):', status, err?.message ?? err ?? '')
+        }
+      })
+    return () => {
+      void supabase.removeChannel(channel)
+    }
+  }, [remote, userId])
 
   const user = useMemo(() => {
     if (remote) return remoteUser
@@ -207,11 +246,23 @@ export function AuthProvider({ children }) {
       register,
       logout,
       updateAccentColor,
+      profilesRemoteTick,
       isAuthenticated: remote ? !!remoteUser : !!user,
       authReady,
       remoteCollab: remote,
     }),
-    [user, userId, login, register, logout, updateAccentColor, remote, remoteUser, authReady]
+    [
+      user,
+      userId,
+      login,
+      register,
+      logout,
+      updateAccentColor,
+      profilesRemoteTick,
+      remote,
+      remoteUser,
+      authReady,
+    ]
   )
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>
