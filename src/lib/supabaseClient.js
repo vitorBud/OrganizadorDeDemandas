@@ -13,4 +13,9 @@ if (!configured && import.meta.env.DEV) {
 }
 
 /** Só existe quando URL + anon key estão definidos; caso contrário `null` (evita crash do SDK). */
-export const supabase = configured ? createClient(url, anonKey) : null
+export const supabase = configured
+  ? createClient(url, anonKey, {
+      auth: { persistSession: true, autoRefreshToken: true },
+      realtime: { params: { eventsPerSecond: 20 } },
+    })
+  : null

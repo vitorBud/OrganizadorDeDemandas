@@ -611,7 +611,12 @@ export function subscribeTaskChannels(projectId, onChange) {
       { event: '*', schema: 'public', table: 'task_activity', filter: `project_id=eq.${projectId}` },
       () => onChange({ tasks: true })
     )
-    .subscribe()
+    .subscribe((status, err) => {
+      if (status === 'SUBSCRIBED') return
+      if (status === 'CHANNEL_ERROR' || status === 'TIMED_OUT') {
+        console.warn('[OrgDemandas] Realtime (Kanban):', status, err?.message ?? err ?? '')
+      }
+    })
 
   return () => {
     supabase.removeChannel(channel)

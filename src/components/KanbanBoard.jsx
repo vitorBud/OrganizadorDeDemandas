@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import {
   DndContext,
   DragOverlay,
@@ -16,6 +16,7 @@ import {
 } from '@dnd-kit/sortable'
 import { CSS } from '@dnd-kit/utilities'
 import { isRemoteCollab } from '../lib/collabApi'
+import { REMOTE_POLL_INTERVAL_MS } from '../lib/remoteSync'
 import {
   TASK_STATUSES,
   PRIORITIES,
@@ -129,6 +130,8 @@ export function KanbanBoard({ projectId, user, openTaskId, onOpenTaskId }) {
   const [filterAssignee, setFilterAssignee] = useState('')
   const [filterPriority, setFilterPriority] = useState('')
   const [filterText, setFilterText] = useState('')
+  const pollBusyRef = useRef(false)
+  const draggingRef = useRef(false)
 
   const remote = isRemoteCollab()
 
@@ -179,6 +182,28 @@ export function KanbanBoard({ projectId, user, openTaskId, onOpenTaskId }) {
     })
   }, [remote, projectId, reload])
 
+  useEffect(() => {
+    if (!remote || !projectId) return
+    const tick = () => {
+      if (document.visibilityState !== 'visible') return
+      if (draggingRef.current) return
+      if (pollBusyRef.current) return
+      pollBusyRef.current = true
+      void reload().finally(() => {
+        pollBusyRef.current = false
+      })
+    }
+    const id = setInterval(tick, REMOTE_POLL_INTERVAL_MS)
+    const onVis = () => {
+      if (document.visibilityState === 'visible') tick()
+    }
+    document.addEventListener('visibilitychange', onVis)
+    return () => {
+      clearInterval(id)
+      document.removeEventListener('visibilitychange', onVis)
+    }
+  }, [remote, projectId, reload])
+
   const grouped = useMemo(() => {
     const g = { todo: [], in_progress: [], review: [], done: [] }
     const ft = filterText.trim().toLowerCase()
@@ -224,11 +249,18 @@ export function KanbanBoard({ projectId, user, openTaskId, onOpenTaskId }) {
   }
 
   const handleDragStart = (event) => {
+    draggingRef.current = true
     setActiveId(String(event.active.id))
+  }
+
+  const handleDragCancel = () => {
+    draggingRef.current = false
+    setActiveId(null)
   }
 
   const handleDragEnd = (event) => {
     const { active, over } = event
+    draggingRef.current = false
     setActiveId(null)
     if (!over) return
 
@@ -359,6 +391,7 @@ export function KanbanBoard({ projectId, user, openTaskId, onOpenTaskId }) {
         sensors={sensors}
         collisionDetection={closestCorners}
         onDragStart={handleDragStart}
+        onDragCancel={handleDragCancel}
         onDragEnd={handleDragEnd}
       >
         <div className="kanban-columns">

@@ -10,6 +10,7 @@ import {
   subscribeProjectChannels,
 } from '../lib/collabApi'
 import { generateId } from '../lib/storage'
+import { REMOTE_POLL_INTERVAL_MS } from '../lib/remoteSync'
 import { KanbanBoard } from '../components/KanbanBoard'
 import './ProjectBoard.css'
 
@@ -25,6 +26,7 @@ export function ProjectBoard() {
   const debounceTimerRef = useRef(null)
   const lastWriteRef = useRef(0)
   const projectRef = useRef(null)
+  const pollBusyRef = useRef(false)
   const remote = isRemoteCollab()
   const [params, setParams] = useSearchParams()
   const [workspaceTab, setWorkspaceTab] = useState('demandas')
@@ -87,6 +89,27 @@ export function ProjectBoard() {
       void reload()
     })
   }, [remote, projectId, reload])
+
+  useEffect(() => {
+    if (!remote || !projectId || !userId) return
+    const tick = () => {
+      if (document.visibilityState !== 'visible') return
+      if (pollBusyRef.current) return
+      pollBusyRef.current = true
+      void reload().finally(() => {
+        pollBusyRef.current = false
+      })
+    }
+    const id = setInterval(tick, REMOTE_POLL_INTERVAL_MS)
+    const onVis = () => {
+      if (document.visibilityState === 'visible') tick()
+    }
+    document.addEventListener('visibilitychange', onVis)
+    return () => {
+      clearInterval(id)
+      document.removeEventListener('visibilitychange', onVis)
+    }
+  }, [remote, projectId, userId, reload])
 
   useEffect(
     () => () => {
