@@ -5,3 +5,6 @@
 alter table public.profiles add column if not exists accent_color text;
 
 comment on column public.profiles.accent_color is 'Hex #rrggbb opcional; UI usa tom derivado do id se null.';
+
+-- Opcional (core_schema já inclui): se profiles não tiver updated_at por schema antigo:
+-- alter table public.profiles add column if not exists updated_at timestamptz not null default now();

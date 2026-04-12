@@ -73,10 +73,9 @@ export async function fetchMyProfileRow(uid) {
  * @param {string | null} normalizedHex null = limpar
  */
 export async function updateProfileAccentColorRemote(userId, normalizedHex) {
+  // Só accent_color: muitos projetos não têm profiles.updated_at ou o schema cache falha nessa coluna.
   const patch =
-    normalizedHex == null
-      ? { accent_color: null, updated_at: new Date().toISOString() }
-      : { accent_color: normalizedHex, updated_at: new Date().toISOString() }
+    normalizedHex == null ? { accent_color: null } : { accent_color: normalizedHex }
 
   const { error } = await supabase.from('profiles').update(patch).eq('id', userId)
 
