@@ -1,0 +1,120 @@
+.profile-settings {
+  max-width: 520px;
+  margin: 0 auto;
+  padding: 24px 16px 48px;
+}
+
+.profile-settings--loading {
+  padding: 48px 16px;
+  text-align: center;
+}
+
+.profile-settings__back {
+  display: inline-block;
+  margin-bottom: 20px;
+  font-size: 0.9rem;
+  color: var(--accent);
+  text-decoration: none;
+}
+
+.profile-settings__back:hover {
+  text-decoration: underline;
+}
+
+.profile-settings__title {
+  font-family: var(--font-display, inherit);
+  font-size: 1.5rem;
+  font-weight: 600;
+  margin: 0 0 8px;
+  color: var(--text-h);
+}
+
+.profile-settings__lead {
+  margin: 0 0 24px;
+  font-size: 0.95rem;
+  color: var(--text);
+  line-height: 1.5;
+}
+
+.profile-settings__preview {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 20px;
+  padding: 14px 16px;
+  border-radius: var(--radius-md, 8px);
+  border: 1px solid var(--border);
+  background: var(--surface, var(--bg));
+}
+
+.profile-settings__preview-dot {
+  width: 40px;
+  height: 40px;
+  border-radius: 999px;
+  border: 2px solid var(--border);
+  flex-shrink: 0;
+}
+
+.profile-settings__preview-name {
+  font-weight: 600;
+  font-size: 1.05rem;
+}
+
+.profile-settings__presets {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-bottom: 20px;
+}
+
+.profile-settings__swatch {
+  width: 36px;
+  height: 36px;
+  border-radius: 999px;
+  border: 2px solid transparent;
+  cursor: pointer;
+  padding: 0;
+}
+
+.profile-settings__swatch:hover {
+  filter: brightness(1.08);
+}
+
+.profile-settings__swatch--active {
+  border-color: var(--text-h);
+  box-shadow: 0 0 0 2px var(--bg);
+}
+
+.profile-settings__picker-label {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  font-size: 0.9rem;
+  font-weight: 500;
+  color: var(--text-h);
+  margin-bottom: 20px;
+}
+
+.profile-settings__picker {
+  width: 100%;
+  max-width: 120px;
+  height: 44px;
+  padding: 2px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  cursor: pointer;
+  background: var(--bg);
+}
+
+.profile-settings__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  align-items: center;
+}
+
+.profile-settings__msg {
+  margin: 16px 0 0;
+  font-size: 0.9rem;
+  color: var(--text);
+}

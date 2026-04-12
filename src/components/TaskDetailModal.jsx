@@ -6,6 +6,7 @@ import {
   deleteTask,
   addTaskComment,
 } from '../lib/tasksApi'
+import { accentColorForDisplay } from '../lib/userColor'
 import './TaskDetailModal.css'
 
 function actionLabel(action) {
@@ -313,7 +314,12 @@ export function TaskDetailModal({
               <ul className="task-modal__comments">
                 {sortedComments.map((c) => (
                   <li key={c.id} className="task-modal__comment">
-                    <span className="task-modal__comment-author">{c.userName}</span>
+                    <span
+                      className="task-modal__comment-author"
+                      style={{ color: accentColorForDisplay(c.userAccentColor, c.userId) }}
+                    >
+                      {c.userName}
+                    </span>
                     <span className="task-modal__comment-body">{c.body}</span>
                     <time className="task-modal__comment-time" dateTime={new Date(c.createdAt).toISOString()}>
                       {new Date(c.createdAt).toLocaleString()}
@@ -340,7 +346,14 @@ export function TaskDetailModal({
               <ul className="task-modal__activity">
                 {sortedActivity.map((a) => (
                   <li key={a.id} className="task-modal__activity-row">
-                    <span className="task-modal__activity-who">{a.actorName}</span>
+                    <span
+                      className="task-modal__activity-who"
+                      style={{
+                        color: accentColorForDisplay(a.actorAccentColor, a.actorId),
+                      }}
+                    >
+                      {a.actorName}
+                    </span>
                     <span className="task-modal__activity-what">{actionLabel(a.action)}</span>
                     {a.action === 'status_change' && a.detail?.from && a.detail?.to ? (
                       <span className="task-modal__activity-meta">

@@ -17,6 +17,7 @@ import {
 import { CSS } from '@dnd-kit/utilities'
 import { isRemoteCollab } from '../lib/collabApi'
 import { REMOTE_POLL_INTERVAL_MS } from '../lib/remoteSync'
+import { accentColorForDisplay } from '../lib/userColor'
 import {
   TASK_STATUSES,
   PRIORITIES,
@@ -42,13 +43,23 @@ function SortableTaskCard({ task, members, onOpen }) {
     id: task.id,
   })
   const assignee = members.find((m) => m.id === task.assigneeId)
+  const creator = members.find((m) => m.id === task.createdBy)
   const overdue = isTaskOverdue(task)
   const pr = priorityMeta(task.priority)
+
+  const assigneeColor = assignee
+    ? accentColorForDisplay(assignee.accentColor, assignee.id)
+    : null
+  const creatorColor = creator
+    ? accentColorForDisplay(creator.accentColor, creator.id)
+    : null
+  const barColor = assigneeColor || creatorColor
 
   const style = {
     transform: CSS.Transform.toString(transform),
     transition,
     opacity: isDragging ? 0.45 : 1,
+    ...(barColor ? { borderLeft: `3px solid ${barColor}` } : {}),
   }
 
   return (
@@ -82,10 +93,20 @@ function SortableTaskCard({ task, members, onOpen }) {
       ) : null}
       {assignee ? (
         <div className="kanban-card__assignee">
-          <span className="kanban-card__avatar" aria-hidden>
+          <span
+            className="kanban-card__avatar"
+            aria-hidden
+            style={{
+              background: `${assigneeColor}33`,
+              color: assigneeColor,
+              borderColor: `${assigneeColor}66`,
+            }}
+          >
             {(assignee.name || '?').slice(0, 1).toUpperCase()}
           </span>
-          <span className="kanban-card__assignee-name">{assignee.name}</span>
+          <span className="kanban-card__assignee-name" style={{ color: assigneeColor }}>
+            {assignee.name}
+          </span>
         </div>
       ) : (
         <p className="kanban-card__unassigned">Sem responsável</p>
@@ -113,7 +134,7 @@ function KanbanColumn({ statusId, label, children }) {
 /**
  * @param {object} props
  * @param {string} props.projectId
- * @param {{ id: string, name: string }} props.user
+ * @param {{ id: string, name: string, accentColor?: string | null }} props.user
  * @param {string | null} props.openTaskId
  * @param {(id: string | null) => void} props.onOpenTaskId
  */

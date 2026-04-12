@@ -1,5 +1,6 @@
 import { supabase } from './supabaseClient'
 import { isRemoteCollab } from './collabApi'
+import { normalizeAccentColor } from './userColor'
 import { getProjects, saveProjects, generateId, getUsers } from './storage'
 
 export const TASK_STATUSES = [
@@ -64,25 +65,29 @@ function mapTaskRow(row) {
   }
 }
 
-function mapCommentRow(row, nameMap) {
+function mapCommentRow(row, displayMap) {
+  const meta = displayMap[row.user_id]
   return {
     id: row.id,
     taskId: row.task_id,
     projectId: row.project_id,
     userId: row.user_id,
-    userName: nameMap[row.user_id] ?? 'Colega',
+    userName: meta?.name ?? 'Colega',
+    userAccentColor: meta?.accentColor ?? null,
     body: row.body,
     createdAt: row.created_at ? new Date(row.created_at).getTime() : Date.now(),
   }
 }
 
-function mapActivityRow(row, nameMap) {
+function mapActivityRow(row, displayMap) {
+  const meta = row.actor_id ? displayMap[row.actor_id] : null
   return {
     id: row.id,
     taskId: row.task_id,
     projectId: row.project_id,
     actorId: row.actor_id,
-    actorName: row.actor_id ? nameMap[row.actor_id] ?? 'Alguém' : 'Sistema',
+    actorName: row.actor_id ? meta?.name ?? 'Alguém' : 'Sistema',
+    actorAccentColor: row.actor_id ? meta?.accentColor ?? null : null,
     action: row.action,
     detail: row.detail && typeof row.detail === 'object' ? row.detail : {},
     createdAt: row.created_at ? new Date(row.created_at).getTime() : Date.now(),
@@ -103,11 +108,21 @@ function mapNotifRow(row) {
   }
 }
 
-async function profileNameMap(userIds) {
+async function profileDisplayMap(userIds) {
   const ids = [...new Set((userIds || []).filter(Boolean))]
   if (ids.length === 0) return {}
-  const { data } = await supabase.from('profiles').select('id, name').in('id', ids)
-  return Object.fromEntries((data ?? []).map((p) => [p.id, p.name]))
+  const { data } = await supabase.from('profiles').select('id, name, accent_color').in('id', ids)
+  return Object.fromEntries(
+    (data ?? []).map((p) => [
+      p.id,
+      { name: p.name ?? '', accentColor: normalizeAccentColor(p.accent_color) },
+    ])
+  )
+}
+
+function localUserAccent(userId) {
+  const u = getUsers().find((x) => x.id === userId)
+  return normalizeAccentColor(u?.accentColor) ?? null
 }
 
 /** @param {string} projectId @param {string} userId */
@@ -141,7 +156,12 @@ export async function listProjectMembers(projectId, userId) {
     const users = getUsers()
     return (project.memberIds || []).map((id) => {
       const u = users.find((x) => x.id === id)
-      return { id, name: u?.name ?? 'Usuário', email: u?.email ?? '' }
+      return {
+        id,
+        name: u?.name ?? 'Usuário',
+        email: u?.email ?? '',
+        accentColor: normalizeAccentColor(u?.accentColor) ?? null,
+      }
     })
   }
 
@@ -151,10 +171,21 @@ export async function listProjectMembers(projectId, userId) {
     .eq('project_id', projectId)
   if (mErr) throw mErr
   const ids = [...new Set((mems ?? []).map((m) => m.user_id))]
-  const { data: profs, error: pErr } = await supabase.from('profiles').select('id, name').in('id', ids)
+  const { data: profs, error: pErr } = await supabase
+    .from('profiles')
+    .select('id, name, accent_color')
+    .in('id', ids)
   if (pErr) throw pErr
-  const map = Object.fromEntries((profs ?? []).map((p) => [p.id, p.name]))
-  return ids.map((id) => ({ id, name: map[id] ?? 'Usuário', email: '' }))
+  const map = Object.fromEntries(
+    (profs ?? []).map((p) => [
+      p.id,
+      { name: p.name ?? 'Usuário', accentColor: normalizeAccentColor(p.accent_color) },
+    ])
+  )
+  return ids.map((id) => {
+    const row = map[id]
+    return { id, name: row?.name ?? 'Usuário', email: '', accentColor: row?.accentColor ?? null }
+  })
 }
 
 /**
@@ -172,8 +203,16 @@ export async function loadKanbanBundle(projectId, userId) {
     const k = ensureLocalKanban(project)
     return {
       tasks: [...k.tasks],
-      comments: [...k.taskComments],
-      activity: [...k.taskActivity].sort((a, b) => b.createdAt - a.createdAt),
+      comments: [...k.taskComments].map((c) => ({
+        ...c,
+        userAccentColor: c.userAccentColor ?? localUserAccent(c.userId),
+      })),
+      activity: [...k.taskActivity]
+        .sort((a, b) => b.createdAt - a.createdAt)
+        .map((a) => ({
+          ...a,
+          actorAccentColor: a.actorAccentColor ?? (a.actorId ? localUserAccent(a.actorId) : null),
+        })),
     }
   }
 
@@ -195,8 +234,8 @@ export async function loadKanbanBundle(projectId, userId) {
       .order('created_at', { ascending: true })
     if (cErr) throw cErr
     const uids = [...new Set((cRows ?? []).map((r) => r.user_id))]
-    const nm = await profileNameMap(uids)
-    comments = (cRows ?? []).map((r) => mapCommentRow(r, nm))
+    const dm = await profileDisplayMap(uids)
+    comments = (cRows ?? []).map((r) => mapCommentRow(r, dm))
   }
 
   const { data: aRows, error: aErr } = await supabase
@@ -207,8 +246,8 @@ export async function loadKanbanBundle(projectId, userId) {
     .limit(200)
   if (aErr) throw aErr
   const actorIds = [...new Set((aRows ?? []).map((r) => r.actor_id).filter(Boolean))]
-  const an = await profileNameMap(actorIds)
-  const activity = (aRows ?? []).map((r) => mapActivityRow(r, an))
+  const adm = await profileDisplayMap(actorIds)
+  const activity = (aRows ?? []).map((r) => mapActivityRow(r, adm))
 
   return { tasks, comments, activity }
 }
@@ -557,8 +596,8 @@ export async function addTaskComment({ projectId, userId, userName, task, body }
     .select('*')
     .single()
   if (error) throw error
-  const nm = await profileNameMap([userId])
-  const comment = mapCommentRow(data, nm)
+  const dm = await profileDisplayMap([userId])
+  const comment = mapCommentRow(data, dm)
   await logActivityRemote(projectId, task.id, userId, 'comment_added', { preview: text.slice(0, 120) })
 
   if (task.assigneeId && task.assigneeId !== userId) {

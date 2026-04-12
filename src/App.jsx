@@ -9,6 +9,7 @@ import { Register } from './pages/Register'
 import { Workspace } from './pages/Workspace'
 import { ProjectBoard } from './pages/ProjectBoard'
 import { Dashboard } from './pages/Dashboard'
+import { ProfileSettings } from './pages/ProfileSettings'
 import './App.css'
 
 export default function App() {
@@ -30,6 +31,7 @@ export default function App() {
           >
             <Route index element={<Workspace />} />
             <Route path="dashboard" element={<Dashboard />} />
+            <Route path="perfil" element={<ProfileSettings />} />
             <Route path="projeto/:projectId" element={<ProjectBoard />} />
           </Route>
           <Route path="*" element={<Navigate to="/" replace />} />

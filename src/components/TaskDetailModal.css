@@ -146,7 +146,6 @@
 .task-modal__comment-author {
   font-size: 0.8rem;
   font-weight: 600;
-  color: var(--accent-hot);
 }
 
 .task-modal__comment-body {
@@ -187,7 +186,6 @@
 
 .task-modal__activity-who {
   font-weight: 600;
-  color: var(--text-h);
 }
 
 .task-modal__activity-what {

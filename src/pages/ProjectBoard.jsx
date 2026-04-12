@@ -11,6 +11,7 @@ import {
 } from '../lib/collabApi'
 import { generateId } from '../lib/storage'
 import { REMOTE_POLL_INTERVAL_MS } from '../lib/remoteSync'
+import { accentColorForDisplay } from '../lib/userColor'
 import { KanbanBoard } from '../components/KanbanBoard'
 import './ProjectBoard.css'
 
@@ -212,6 +213,7 @@ export function ProjectBoard() {
       await sendMessageRemote(projectId, {
         userId,
         userName: user.name,
+        accentColor: user.accentColor ?? null,
         text,
       })
       setChatDraft('')
@@ -485,7 +487,12 @@ export function ProjectBoard() {
           <ul ref={messagesListRef} className="project-board__messages">
             {messages.map((m) => (
               <li key={m.id} className="project-board__msg">
-                <span className="project-board__msg-author">{m.userName}</span>
+                <span
+                  className="project-board__msg-author"
+                  style={{ color: accentColorForDisplay(m.userAccentColor, m.userId) }}
+                >
+                  {m.userName}
+                </span>
                 <span className="project-board__msg-text">{m.text}</span>
                 <time className="project-board__msg-time" dateTime={new Date(m.createdAt).toISOString()}>
                   {new Date(m.createdAt).toLocaleString()}

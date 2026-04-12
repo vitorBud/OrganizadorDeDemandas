@@ -1,6 +1,8 @@
 import { supabase } from './supabaseClient'
+import { normalizeAccentColor } from './userColor'
 import {
   getProjects,
+  getUsers,
   saveProjects,
   generateId,
   generateJoinCode,
@@ -219,10 +221,16 @@ export async function getProjectIfMember(projectId, userId) {
   if (!isRemoteCollab()) {
     const p = getProjects().find((x) => x.id === projectId)
     if (!p || !p.memberIds?.includes(userId)) return null
+    const users = getUsers()
+    const colorOf = (uid) => normalizeAccentColor(users.find((u) => u.id === uid)?.accentColor) ?? null
+    const messages = (p.messages || []).map((m) => ({
+      ...m,
+      userAccentColor: m.userAccentColor ?? colorOf(m.userId),
+    }))
     return {
       ...p,
       blocks: [...(p.blocks || [])],
-      messages: [...(p.messages || [])],
+      messages,
     }
   }
 
@@ -256,21 +264,34 @@ export async function getProjectIfMember(projectId, userId) {
     .order('created_at', { ascending: true })
 
   const userIds = [...new Set((msgRows ?? []).map((m) => m.user_id).filter(Boolean))]
-  let nameMap = {}
+  let profileMap = {}
   if (userIds.length > 0) {
-    const { data: profs } = await supabase.from('profiles').select('id, name').in('id', userIds)
-    nameMap = Object.fromEntries((profs ?? []).map((p) => [p.id, p.name]))
+    const { data: profs } = await supabase
+      .from('profiles')
+      .select('id, name, accent_color')
+      .in('id', userIds)
+    profileMap = Object.fromEntries(
+      (profs ?? []).map((p) => [
+        p.id,
+        {
+          name: p.name,
+          accentColor: normalizeAccentColor(p.accent_color),
+        },
+      ])
+    )
   }
 
   const blocks = (blockRows ?? []).map(mapBlockRow)
   const messages = (msgRows ?? []).map((m) => {
-    const fromProfile = nameMap[m.user_id]?.trim()
+    const prof = profileMap[m.user_id]
+    const fromProfile = prof?.name?.trim()
     const fromSender = m.sender_name?.trim()
     const userName = fromProfile || fromSender || 'Colega'
     return {
       id: m.id,
       userId: m.user_id,
       userName,
+      userAccentColor: prof?.accentColor ?? null,
       text: m.text,
       createdAt: new Date(m.created_at).getTime(),
     }
@@ -325,7 +346,7 @@ export async function persistProjectState(projectId, { blocks, messages }) {
  */
 /**
  * @param {string} projectId
- * @param {{ userId: string, userName: string, text: string }} msg
+ * @param {{ userId: string, userName: string, text: string, accentColor?: string | null }} msg
  */
 export async function sendMessageRemote(projectId, msg) {
   if (!isRemoteCollab()) {
@@ -336,6 +357,7 @@ export async function sendMessageRemote(projectId, msg) {
       id: generateId(),
       userId: msg.userId,
       userName: msg.userName,
+      userAccentColor: normalizeAccentColor(msg.accentColor) ?? null,
       text: msg.text,
       createdAt: Date.now(),
     }

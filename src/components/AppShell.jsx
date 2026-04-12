@@ -4,6 +4,7 @@ import { useAuth } from '../context/AuthContext'
 import { useTheme } from '../context/ThemeContext'
 import { isRemoteCollab } from '../lib/collabApi'
 import { listMyNotifications, markNotificationsRead, subscribeNotificationChannel } from '../lib/tasksApi'
+import { accentColorForDisplay } from '../lib/userColor'
 import './AppShell.css'
 
 export function AppShell() {
@@ -95,6 +96,14 @@ export function AppShell() {
           >
             Dashboard
           </NavLink>
+          <NavLink
+            to="/app/perfil"
+            className={({ isActive }) =>
+              `app-shell__nav-link${isActive ? ' app-shell__nav-link--active' : ''}`
+            }
+          >
+            A tua cor
+          </NavLink>
         </nav>
         <div className="app-shell__actions">
           {remote ? (
@@ -152,7 +161,16 @@ export function AppShell() {
             </select>
           </label>
 
-          <span className="app-shell__user">{user?.name}</span>
+          <span
+            className="app-shell__user"
+            style={
+              user?.id
+                ? { color: accentColorForDisplay(user.accentColor, user.id) }
+                : undefined
+            }
+          >
+            {user?.name}
+          </span>
           <button type="button" className="btn btn--ghost btn--sm" onClick={() => void handleLogout()}>
             Sair
           </button>

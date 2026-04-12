@@ -350,7 +350,6 @@
 .project-board__msg-author {
   font-size: 0.8rem;
   font-weight: 600;
-  color: var(--accent-hot);
 }
 
 .project-board__msg-text {
