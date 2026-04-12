@@ -276,11 +276,12 @@ export async function getProjectIfMember(projectId, userId) {
     const fromProfile = prof?.name?.trim()
     const fromSender = m.sender_name?.trim()
     const userName = fromProfile || fromSender || 'Colega'
+    const fromRowAccent = normalizeAccentColor(m.sender_accent)
     return {
       id: m.id,
       userId: m.user_id,
       userName,
-      userAccentColor: prof?.accentColor ?? null,
+      userAccentColor: prof?.accentColor ?? fromRowAccent ?? null,
       text: m.text,
       createdAt: new Date(m.created_at).getTime(),
     }
@@ -356,16 +357,25 @@ export async function sendMessageRemote(projectId, msg) {
     return
   }
 
-  const row = {
+  const base = {
     project_id: projectId,
     user_id: msg.userId,
     text: msg.text,
-    sender_name: msg.userName?.trim() || null,
   }
-  let { error } = await supabase.from('messages').insert(row)
+  const senderName = msg.userName?.trim() || null
+  const senderAccent = normalizeAccentColor(msg.accentColor) ?? null
+  let payload = {
+    ...base,
+    sender_name: senderName,
+    sender_accent: senderAccent,
+  }
+  let { error } = await supabase.from('messages').insert(payload)
+  if (error && /sender_accent|column/i.test(String(error.message || ''))) {
+    payload = senderName ? { ...base, sender_name: senderName } : base
+    ;({ error } = await supabase.from('messages').insert(payload))
+  }
   if (error && /sender_name|column/i.test(String(error.message || ''))) {
-    const { project_id, user_id, text } = row
-    ;({ error } = await supabase.from('messages').insert({ project_id, user_id, text }))
+    ;({ error } = await supabase.from('messages').insert(base))
   }
   if (error) throw error
 }

@@ -221,7 +221,7 @@ export function ProjectBoard() {
       await sendMessageRemote(projectId, {
         userId,
         userName: user.name,
-        accentColor: user.accentColor ?? null,
+        accentColor: accentColorForDisplay(user?.accentColor, userId),
         text,
       })
       setChatDraft('')
