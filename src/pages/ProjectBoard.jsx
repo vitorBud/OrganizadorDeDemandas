@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
 import { Link, useNavigate, useParams, useSearchParams } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import {
@@ -235,6 +235,22 @@ export function ProjectBoard() {
     [project]
   )
 
+  const messagesListRef = useRef(null)
+
+  const chatScrollSig = useMemo(() => {
+    const arr = project?.messages ?? []
+    if (!arr.length) return '0'
+    const sorted = [...arr].sort((a, b) => a.createdAt - b.createdAt)
+    const last = sorted[sorted.length - 1]
+    return `${sorted.length}:${last.id}`
+  }, [project])
+
+  useLayoutEffect(() => {
+    const el = messagesListRef.current
+    if (!el) return
+    el.scrollTo({ top: el.scrollHeight, behavior: 'auto' })
+  }, [chatScrollSig])
+
   if (!project) {
     return (
       <div className="project-board project-board--loading">
@@ -466,7 +482,7 @@ export function ProjectBoard() {
 
         <aside className="project-board__chat" aria-label="Chat do projeto">
           <h2 className="project-board__chat-title">Chat</h2>
-          <ul className="project-board__messages">
+          <ul ref={messagesListRef} className="project-board__messages">
             {messages.map((m) => (
               <li key={m.id} className="project-board__msg">
                 <span className="project-board__msg-author">{m.userName}</span>
