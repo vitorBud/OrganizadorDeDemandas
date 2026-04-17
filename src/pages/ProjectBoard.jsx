@@ -38,6 +38,8 @@ export function ProjectBoard() {
   const [members, setMembers] = useState([])
   const [groupActionBusy, setGroupActionBusy] = useState(false)
   const [groupError, setGroupError] = useState('')
+  const [docDirty, setDocDirty] = useState(false)
+  const [docSaving, setDocSaving] = useState(false)
   const openTaskId = params.get('task')
 
   const setOpenTaskId = useCallback(
@@ -89,6 +91,9 @@ export function ProjectBoard() {
   useEffect(() => {
     if (!remote || !projectId) return
     return subscribeProjectChannels(projectId, (payload) => {
+      if (payload?.blocks && docDirty && displayTab === 'documento') {
+        return
+      }
       if (payload?.messages) {
         void reload()
         return
@@ -96,12 +101,13 @@ export function ProjectBoard() {
       if (Date.now() - lastWriteRef.current < 780) return
       void reload()
     })
-  }, [remote, projectId, reload])
+  }, [remote, projectId, reload, docDirty, displayTab])
 
   useEffect(() => {
     if (!remote || !projectId || !userId) return
     const tick = () => {
       if (document.visibilityState !== 'visible') return
+      if (docDirty && displayTab === 'documento') return
       if (pollBusyRef.current) return
       pollBusyRef.current = true
       void reload().finally(() => {
@@ -117,7 +123,7 @@ export function ProjectBoard() {
       clearInterval(id)
       document.removeEventListener('visibilitychange', onVis)
     }
-  }, [remote, projectId, userId, reload])
+  }, [remote, projectId, userId, reload, docDirty, displayTab])
 
   useEffect(() => {
     if (profilesRemoteTick === 0) return
@@ -200,21 +206,33 @@ export function ProjectBoard() {
     if (type === 'code') Object.assign(base, { content: '', language: '' })
     const blocks = [...(project.blocks || []), base]
     setProject({ ...project, blocks })
-    scheduleSave(blocks)
+    if (remote) {
+      setDocDirty(true)
+    } else {
+      scheduleSave(blocks)
+    }
   }
 
   const updateBlock = (id, patch) => {
     if (!project) return
     const blocks = project.blocks.map((b) => (b.id === id ? { ...b, ...patch } : b))
     setProject({ ...project, blocks })
-    scheduleSave(blocks)
+    if (remote) {
+      setDocDirty(true)
+    } else {
+      scheduleSave(blocks)
+    }
   }
 
   const removeBlock = (id) => {
     if (!project) return
     const blocks = project.blocks.filter((b) => b.id !== id)
     setProject({ ...project, blocks })
-    void flushSave(blocks)
+    if (remote) {
+      setDocDirty(true)
+    } else {
+      void flushSave(blocks)
+    }
   }
 
   const moveBlock = (id, dir) => {
@@ -226,8 +244,24 @@ export function ProjectBoard() {
     if (j < 0 || j >= blocks.length) return
     ;[blocks[idx], blocks[j]] = [blocks[j], blocks[idx]]
     setProject({ ...project, blocks })
-    void flushSave(blocks)
+    if (remote) {
+      setDocDirty(true)
+    } else {
+      void flushSave(blocks)
+    }
   }
+
+  const saveDocumentBlocks = useCallback(async () => {
+    const blocksToSave = projectRef.current?.blocks
+    if (!projectId || !blocksToSave || !remote || docSaving || !docDirty) return
+    setDocSaving(true)
+    try {
+      await flushSave(blocksToSave)
+      setDocDirty(false)
+    } finally {
+      setDocSaving(false)
+    }
+  }, [projectId, remote, docSaving, docDirty, flushSave])
 
   const handleImageFile = (blockId, file) => {
     if (!file?.type?.startsWith('image/')) return
@@ -466,6 +500,17 @@ export function ProjectBoard() {
             <button type="button" className="btn btn--ghost btn--sm" onClick={() => addBlock('code')}>
               Código
             </button>
+            {remote ? (
+              <button
+                type="button"
+                className="btn btn--primary btn--sm"
+                onClick={() => void saveDocumentBlocks()}
+                disabled={!docDirty || docSaving}
+                title="Sincroniza o documento para os demais membros"
+              >
+                {docSaving ? 'Salvando...' : docDirty ? 'Salvar documento' : 'Documento salvo'}
+              </button>
+            ) : null}
           </div>
 
           {blocks.length === 0 ? (
@@ -541,7 +586,6 @@ export function ProjectBoard() {
                         style={{ textAlign: b.align || 'left' }}
                         value={b.content || ''}
                         onChange={(e) => updateBlock(b.id, { content: e.target.value })}
-                        onBlur={() => void flushSave(projectRef.current?.blocks ?? [])}
                         placeholder="Escreva anotações, demandas ou checklists…"
                         rows={4}
                       />
@@ -597,7 +641,6 @@ export function ProjectBoard() {
                         className="block-card__code"
                         value={b.content || ''}
                         onChange={(e) => updateBlock(b.id, { content: e.target.value })}
-                        onBlur={() => void flushSave(projectRef.current?.blocks ?? [])}
                         placeholder="Cole ou digite código aqui…"
                         rows={8}
                         spellCheck={false}
