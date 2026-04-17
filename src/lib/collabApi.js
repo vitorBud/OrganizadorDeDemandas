@@ -218,6 +218,96 @@ export async function joinProjectByCode(userId, code) {
  * @param {string} projectId
  * @param {string} userId
  */
+export async function leaveProject(projectId, userId) {
+  if (!isRemoteCollab()) {
+    const all = getProjects()
+    const i = all.findIndex((p) => p.id === projectId)
+    if (i === -1) throw new Error('Projeto não encontrado.')
+    const project = all[i]
+    if (project.ownerId === userId) {
+      throw new Error('O líder não pode sair do grupo sem excluir o projeto.')
+    }
+    project.memberIds = (project.memberIds || []).filter((id) => id !== userId)
+    project.updatedAt = Date.now()
+    saveProjects(all)
+    return
+  }
+
+  const { error } = await supabase.rpc('leave_project', { p_project_id: projectId })
+  if (error) {
+    const msg = String(error.message || '')
+    if (error.code === '42883' || msg.includes('leave_project')) {
+      throw new Error(
+        'Função leave_project não encontrada no Supabase. Adicione essa RPC para permitir sair do grupo.'
+      )
+    }
+    throw new Error(msg || 'Não foi possível sair do grupo.')
+  }
+}
+
+/**
+ * @param {string} projectId
+ * @param {string} userId
+ */
+export async function deleteProject(projectId, userId) {
+  if (!isRemoteCollab()) {
+    const all = getProjects()
+    const i = all.findIndex((p) => p.id === projectId)
+    if (i === -1) throw new Error('Projeto não encontrado.')
+    if (all[i].ownerId !== userId) throw new Error('Somente o líder pode excluir o grupo.')
+    all.splice(i, 1)
+    saveProjects(all)
+    return
+  }
+
+  const { error } = await supabase.from('projects').delete().eq('id', projectId).eq('owner_id', userId)
+  if (error) throw error
+}
+
+/**
+ * @param {string} projectId
+ * @param {string} actorUserId
+ * @param {string} targetUserId
+ */
+export async function removeProjectMember(projectId, actorUserId, targetUserId) {
+  if (actorUserId === targetUserId) throw new Error('Use a opção de sair do grupo para remover a si mesmo.')
+
+  if (!isRemoteCollab()) {
+    const all = getProjects()
+    const i = all.findIndex((p) => p.id === projectId)
+    if (i === -1) throw new Error('Projeto não encontrado.')
+    const project = all[i]
+    if (project.ownerId !== actorUserId) throw new Error('Somente o líder pode expulsar membros.')
+    project.memberIds = (project.memberIds || []).filter((id) => id !== targetUserId)
+    project.updatedAt = Date.now()
+    if (project.tasks?.length) {
+      project.tasks = project.tasks.map((t) =>
+        t.assigneeId === targetUserId ? { ...t, assigneeId: null, updatedAt: Date.now() } : t
+      )
+    }
+    saveProjects(all)
+    return
+  }
+
+  const { error } = await supabase.rpc('remove_project_member', {
+    p_project_id: projectId,
+    p_target_user_id: targetUserId,
+  })
+  if (error) {
+    const msg = String(error.message || '')
+    if (error.code === '42883' || msg.includes('remove_project_member')) {
+      throw new Error(
+        'Função remove_project_member não encontrada no Supabase. Adicione essa RPC para permitir expulsar membros.'
+      )
+    }
+    throw new Error(msg || 'Não foi possível remover o membro.')
+  }
+}
+
+/**
+ * @param {string} projectId
+ * @param {string} userId
+ */
 export async function getProjectIfMember(projectId, userId) {
   if (!isRemoteCollab()) {
     const p = getProjects().find((x) => x.id === projectId)

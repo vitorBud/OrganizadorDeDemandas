@@ -6,12 +6,16 @@ import {
   isRemoteCollab,
   newRemoteId,
   persistProjectState,
+  leaveProject,
+  deleteProject,
+  removeProjectMember,
   sendMessageRemote,
   subscribeProjectChannels,
 } from '../lib/collabApi'
 import { generateId } from '../lib/storage'
 import { REMOTE_POLL_INTERVAL_MS } from '../lib/remoteSync'
 import { accentColorForDisplay } from '../lib/userColor'
+import { listProjectMembers } from '../lib/tasksApi'
 import { KanbanBoard } from '../components/KanbanBoard'
 import './ProjectBoard.css'
 
@@ -31,6 +35,9 @@ export function ProjectBoard() {
   const remote = isRemoteCollab()
   const [params, setParams] = useSearchParams()
   const [workspaceTab, setWorkspaceTab] = useState('demandas')
+  const [members, setMembers] = useState([])
+  const [groupActionBusy, setGroupActionBusy] = useState(false)
+  const [groupError, setGroupError] = useState('')
   const openTaskId = params.get('task')
 
   const setOpenTaskId = useCallback(
@@ -119,6 +126,22 @@ export function ProjectBoard() {
       void reload()
     })
   }, [profilesRemoteTick, remote, projectId, userId, reload])
+
+  useEffect(() => {
+    if (!projectId || !userId) return
+    let alive = true
+    ;(async () => {
+      try {
+        const list = await listProjectMembers(projectId, userId)
+        if (alive) setMembers(list)
+      } catch (e) {
+        if (alive) setGroupError(e?.message || 'Erro ao carregar membros do grupo.')
+      }
+    })()
+    return () => {
+      alive = false
+    }
+  }, [projectId, userId, profilesRemoteTick])
 
   useEffect(
     () => () => {
@@ -239,6 +262,61 @@ export function ProjectBoard() {
     })
   }
 
+  const handleLeaveGroup = async () => {
+    if (!project || !userId) return
+    if (project.ownerId === userId) {
+      setGroupError('Você é líder deste grupo. Use "Excluir grupo".')
+      return
+    }
+    if (!window.confirm('Sair deste grupo? Você perderá acesso ao quadro.')) return
+    setGroupActionBusy(true)
+    setGroupError('')
+    try {
+      await leaveProject(project.id, userId)
+      navigate('/app', { replace: true })
+    } catch (e) {
+      setGroupError(e?.message || 'Não foi possível sair do grupo.')
+    } finally {
+      setGroupActionBusy(false)
+    }
+  }
+
+  const handleDeleteGroup = async () => {
+    if (!project || !userId) return
+    if (project.ownerId !== userId) {
+      setGroupError('Somente o líder pode excluir o grupo.')
+      return
+    }
+    if (!window.confirm('Excluir este grupo permanentemente? Esta ação não pode ser desfeita.')) return
+    setGroupActionBusy(true)
+    setGroupError('')
+    try {
+      await deleteProject(project.id, userId)
+      navigate('/app', { replace: true })
+    } catch (e) {
+      setGroupError(e?.message || 'Não foi possível excluir o grupo.')
+    } finally {
+      setGroupActionBusy(false)
+    }
+  }
+
+  const handleKickMember = async (targetUserId, targetName) => {
+    if (!project || !userId) return
+    if (!window.confirm(`Expulsar ${targetName} do grupo?`)) return
+    setGroupActionBusy(true)
+    setGroupError('')
+    try {
+      await removeProjectMember(project.id, userId, targetUserId)
+      const list = await listProjectMembers(project.id, userId)
+      setMembers(list)
+      await reload()
+    } catch (e) {
+      setGroupError(e?.message || 'Não foi possível expulsar o membro.')
+    } finally {
+      setGroupActionBusy(false)
+    }
+  }
+
   const blocks = project?.blocks ?? []
   const messages = useMemo(
     () => [...(project?.messages || [])].sort((a, b) => a.createdAt - b.createdAt),
@@ -291,6 +369,50 @@ export function ProjectBoard() {
               {copied ? 'Copiado!' : 'Copiar'}
             </button>
           </div>
+          <div className="project-board__group-menu">
+            {project.ownerId === userId ? (
+              <button
+                type="button"
+                className="btn btn--ghost btn--sm btn--danger"
+                onClick={() => void handleDeleteGroup()}
+                disabled={groupActionBusy}
+              >
+                Excluir grupo
+              </button>
+            ) : (
+              <button
+                type="button"
+                className="btn btn--ghost btn--sm"
+                onClick={() => void handleLeaveGroup()}
+                disabled={groupActionBusy}
+              >
+                Sair do grupo
+              </button>
+            )}
+          </div>
+          {groupError ? <p className="project-board__group-error">{groupError}</p> : null}
+          {project.ownerId === userId && members.length > 1 ? (
+            <div className="project-board__members">
+              <p className="project-board__members-title">Gerenciar membros</p>
+              <ul className="project-board__members-list">
+                {members
+                  .filter((m) => m.id !== userId)
+                  .map((m) => (
+                    <li key={m.id} className="project-board__member-item">
+                      <span>{m.name}</span>
+                      <button
+                        type="button"
+                        className="btn btn--ghost btn--sm btn--danger"
+                        onClick={() => void handleKickMember(m.id, m.name)}
+                        disabled={groupActionBusy}
+                      >
+                        Expulsar
+                      </button>
+                    </li>
+                  ))}
+              </ul>
+            </div>
+          ) : null}
         </div>
       </div>
 

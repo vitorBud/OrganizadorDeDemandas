@@ -39,7 +39,17 @@ function priorityMeta(id) {
   return PRIORITIES.find((p) => p.id === id) ?? PRIORITIES[1]
 }
 
-function SortableTaskCard({ task, members, onOpen }) {
+function priorityBorderColor(id) {
+  if (id === 'high') return '#ef4444'
+  if (id === 'low') return '#22c55e'
+  return '#eab308'
+}
+
+function statusLabel(id) {
+  return TASK_STATUSES.find((s) => s.id === id)?.label ?? id
+}
+
+function SortableTaskCard({ task, members, commentCount, onOpen }) {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
     id: task.id,
   })
@@ -47,6 +57,7 @@ function SortableTaskCard({ task, members, onOpen }) {
   const creator = members.find((m) => m.id === task.createdBy)
   const overdue = isTaskOverdue(task)
   const pr = priorityMeta(task.priority)
+  const priorityColor = priorityBorderColor(task.priority)
 
   const assigneeColor = assignee
     ? accentColorForDisplay(assignee.accentColor, assignee.id)
@@ -60,7 +71,9 @@ function SortableTaskCard({ task, members, onOpen }) {
     transform: CSS.Transform.toString(transform),
     transition,
     opacity: isDragging ? 0.45 : 1,
-    ...(barColor ? { borderLeft: `3px solid ${barColor}` } : {}),
+    borderColor: priorityColor,
+    borderLeftWidth: '4px',
+    ...(barColor ? { boxShadow: `inset 0 0 0 1px ${barColor}22, var(--shadow)` } : {}),
   }
 
   return (
@@ -86,6 +99,11 @@ function SortableTaskCard({ task, members, onOpen }) {
         </span>
         <h3 className="kanban-card__title">{task.title}</h3>
       </div>
+      <div className="kanban-card__meta">
+        <span>Status: {statusLabel(task.status)}</span>
+        <span>Prioridade: {pr.label}</span>
+      </div>
+      {task.description ? <p className="kanban-card__desc">{task.description.slice(0, 120)}</p> : null}
       {task.dueDate ? (
         <time className="kanban-card__due" dateTime={task.dueDate}>
           Prazo: {task.dueDate}
@@ -106,12 +124,16 @@ function SortableTaskCard({ task, members, onOpen }) {
             {(assignee.name || '?').slice(0, 1).toUpperCase()}
           </span>
           <span className="kanban-card__assignee-name" style={{ color: assigneeColor }}>
-            {assignee.name}
+            Responsável: {assignee.name}
           </span>
         </div>
       ) : (
         <p className="kanban-card__unassigned">Sem responsável</p>
       )}
+      <div className="kanban-card__foot">
+        <span>Criada por: {creator?.name || '—'}</span>
+        <span>Comentários: {commentCount}</span>
+      </div>
     </article>
   )
 }
@@ -249,6 +271,14 @@ export function KanbanBoard({ projectId, user, openTaskId, onOpenTaskId }) {
     }
     return g
   }, [tasks, filterAssignee, filterPriority, filterText])
+
+  const commentCountByTask = useMemo(() => {
+    const map = new Map()
+    for (const c of comments) {
+      map.set(c.taskId, (map.get(c.taskId) ?? 0) + 1)
+    }
+    return map
+  }, [comments])
 
   const activeTask = useMemo(() => tasks.find((t) => t.id === activeId), [tasks, activeId])
 
@@ -432,7 +462,12 @@ export function KanbanBoard({ projectId, user, openTaskId, onOpenTaskId }) {
                 <ul className="kanban-column__list">
                   {grouped[colId].map((task) => (
                     <li key={task.id}>
-                      <SortableTaskCard task={task} members={members} onOpen={(t) => onOpenTaskId(t.id)} />
+                      <SortableTaskCard
+                        task={task}
+                        members={members}
+                        commentCount={commentCountByTask.get(task.id) ?? 0}
+                        onOpen={(t) => onOpenTaskId(t.id)}
+                      />
                     </li>
                   ))}
                 </ul>
