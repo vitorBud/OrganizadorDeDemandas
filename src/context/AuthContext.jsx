@@ -15,7 +15,11 @@ import {
   setSessionUserId,
   generateId,
 } from '../lib/storage'
-import { fetchMyProfileRow, updateProfileAccentColorRemote } from '../lib/profileRemote'
+import {
+  fetchMyProfileRow,
+  updateProfileAccentColorRemote,
+  upsertProfileNameRemote,
+} from '../lib/profileRemote'
 import { normalizeAccentColor } from '../lib/userColor'
 
 const AuthContext = createContext(null)
@@ -51,10 +55,23 @@ export function AuthProvider({ children }) {
       if (cancelled) return
       const { data: { user } } = await supabase.auth.getUser()
       if (!user) return
+      const metadataName = String(user.user_metadata?.name ?? '').trim()
+      const profileName = String(data?.name ?? '').trim()
+      const emailName = String(user.email?.split('@')[0] ?? '').trim()
+      const resolvedName = profileName || metadataName || emailName || 'Usuário'
+
+      // Backfill para contas antigas com perfil sem nome visível.
+      if (!profileName) {
+        const r = await upsertProfileNameRemote(user.id, resolvedName)
+        if (!r.ok) {
+          console.warn('[OrgDemandas] Falha ao sincronizar nome do perfil:', r.error)
+        }
+      }
+
       setRemoteUser({
         id: user.id,
         email: user.email ?? '',
-        name: data?.name ?? user.user_metadata?.name ?? user.email?.split('@')[0] ?? 'Usuário',
+        name: resolvedName,
         accentColor: normalizeAccentColor(data?.accent_color) ?? null,
       })
       setUserId(user.id)

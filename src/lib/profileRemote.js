@@ -86,3 +86,16 @@ export async function updateProfileAccentColorRemote(userId, normalizedHex) {
   if (error) return { ok: false, error: error.message || 'Erro ao guardar.' }
   return { ok: true }
 }
+
+/**
+ * Garante que o perfil remoto tenha nome visível (upsert por id).
+ * @param {string} userId
+ * @param {string} displayName
+ */
+export async function upsertProfileNameRemote(userId, displayName) {
+  const name = String(displayName ?? '').trim()
+  if (!name) return { ok: false, error: 'Nome inválido.' }
+  const { error } = await supabase.from('profiles').upsert({ id: userId, name }, { onConflict: 'id' })
+  if (error) return { ok: false, error: error.message || 'Erro ao atualizar nome.' }
+  return { ok: true }
+}
