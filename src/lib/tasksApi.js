@@ -71,6 +71,30 @@ function resolveDisplayName(value, fallback = 'Usuário') {
   return trimmed || fallback
 }
 
+async function fetchMemberNameHintsFromMessages(projectId, userIds) {
+  const ids = [...new Set((userIds || []).filter(Boolean))]
+  if (!ids.length || !isRemoteCollab() || !supabase) return {}
+  const { data, error } = await supabase
+    .from('messages')
+    .select('user_id, sender_name, created_at')
+    .eq('project_id', projectId)
+    .in('user_id', ids)
+    .order('created_at', { ascending: false })
+    .limit(500)
+
+  // Banco sem coluna sender_name (migração antiga): apenas ignora esse fallback.
+  if (error && /sender_name|column|schema cache/i.test(String(error.message || ''))) return {}
+  if (error) throw error
+
+  const out = {}
+  for (const row of data ?? []) {
+    if (out[row.user_id]) continue
+    const name = String(row.sender_name ?? '').trim()
+    if (name) out[row.user_id] = name
+  }
+  return out
+}
+
 function mapCommentRow(row, displayMap) {
   const meta = displayMap[row.user_id]
   return {
@@ -170,11 +194,12 @@ export async function listProjectMembers(projectId, userId) {
   if (mErr) throw mErr
   const ids = [...new Set((mems ?? []).map((m) => m.user_id))]
   const map = await fetchProfilesDisplayMapByIds(ids)
+  const messageHints = await fetchMemberNameHintsFromMessages(projectId, ids)
   return ids.map((id) => {
     const row = map[id]
     return {
       id,
-      name: resolveDisplayName(row?.name),
+      name: resolveDisplayName(row?.name || messageHints[id]),
       email: '',
       accentColor: row?.accentColor ?? null,
     }
