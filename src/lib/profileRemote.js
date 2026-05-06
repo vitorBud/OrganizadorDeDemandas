@@ -20,7 +20,7 @@ function mapProfileRows(data) {
     (data ?? []).map((p) => [
       p.id,
       {
-        name: p.name ?? '',
+        name: String(p.name ?? '').trim(),
         accentColor: normalizeAccentColor(p.accent_color) ?? null,
       },
     ])

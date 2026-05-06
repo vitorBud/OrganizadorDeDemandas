@@ -66,6 +66,11 @@ function mapTaskRow(row) {
   }
 }
 
+function resolveDisplayName(value, fallback = 'Usuário') {
+  const trimmed = String(value ?? '').trim()
+  return trimmed || fallback
+}
+
 function mapCommentRow(row, displayMap) {
   const meta = displayMap[row.user_id]
   return {
@@ -73,7 +78,7 @@ function mapCommentRow(row, displayMap) {
     taskId: row.task_id,
     projectId: row.project_id,
     userId: row.user_id,
-    userName: meta?.name ?? 'Colega',
+    userName: resolveDisplayName(meta?.name, 'Colega'),
     userAccentColor: meta?.accentColor ?? null,
     body: row.body,
     createdAt: row.created_at ? new Date(row.created_at).getTime() : Date.now(),
@@ -87,7 +92,7 @@ function mapActivityRow(row, displayMap) {
     taskId: row.task_id,
     projectId: row.project_id,
     actorId: row.actor_id,
-    actorName: row.actor_id ? meta?.name ?? 'Alguém' : 'Sistema',
+    actorName: row.actor_id ? resolveDisplayName(meta?.name, 'Alguém') : 'Sistema',
     actorAccentColor: row.actor_id ? meta?.accentColor ?? null : null,
     action: row.action,
     detail: row.detail && typeof row.detail === 'object' ? row.detail : {},
@@ -151,7 +156,7 @@ export async function listProjectMembers(projectId, userId) {
       const u = users.find((x) => x.id === id)
       return {
         id,
-        name: u?.name ?? 'Usuário',
+        name: resolveDisplayName(u?.name),
         email: u?.email ?? '',
         accentColor: normalizeAccentColor(u?.accentColor) ?? null,
       }
@@ -167,7 +172,12 @@ export async function listProjectMembers(projectId, userId) {
   const map = await fetchProfilesDisplayMapByIds(ids)
   return ids.map((id) => {
     const row = map[id]
-    return { id, name: row?.name ?? 'Usuário', email: '', accentColor: row?.accentColor ?? null }
+    return {
+      id,
+      name: resolveDisplayName(row?.name),
+      email: '',
+      accentColor: row?.accentColor ?? null,
+    }
   })
 }
 
