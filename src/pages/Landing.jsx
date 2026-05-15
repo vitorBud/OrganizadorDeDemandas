@@ -11,7 +11,7 @@ export function Landing() {
           <p className="landing__badge">Kanban · tempo real · equipes</p>
           <h1 className="landing__title">Demandas claras. Time alinhado. Menos ruído.</h1>
           <p className="landing__lead">
-            Projetos com código de sala, quadro Kanban com prazos e responsáveis, documento livre e
+            Projetos com código de sala, quadro Kanban com prazos e responsáveis, mural de avisos e
             chat no mesmo lugar — o fluxo que você esperaria de uma ferramenta profissional, sem
             excesso de complexidade.
           </p>
@@ -34,7 +34,7 @@ export function Landing() {
             </li>
             <li>
               <span className="landing__bullet" aria-hidden />
-              Quadro simples — blocos que você adiciona e reorganiza conforme a demanda muda.
+              Mural do grupo — publique avisos e decisões; edite quando precisar atualizar o time.
             </li>
             <li>
               <span className="landing__bullet" aria-hidden />

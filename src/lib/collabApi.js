@@ -39,6 +39,11 @@ function mapBlockRow(row) {
     align: meta.align ?? 'left',
     size: meta.size ?? 'md',
     language: meta.language ?? '',
+    title: meta.title ?? '',
+    authorId: meta.authorId ?? null,
+    authorName: meta.authorName ?? '',
+    createdAt: meta.createdAt ?? null,
+    updatedAt: meta.updatedAt ?? null,
   }
 }
 
@@ -52,6 +57,11 @@ function blockToDb(projectId, block, sortOrder) {
       align: block.align,
       size: block.size,
       language: block.language,
+      title: block.title,
+      authorId: block.authorId,
+      authorName: block.authorName,
+      createdAt: block.createdAt,
+      updatedAt: block.updatedAt,
     },
     sort_order: sortOrder,
   }

@@ -13,7 +13,13 @@ import {
 import { Doughnut, Bar } from 'react-chartjs-2'
 import { useAuth } from '../context/AuthContext'
 import { listProjects } from '../lib/collabApi'
-import { TASK_STATUSES, loadKanbanBundle, computeInsights, isTaskOverdue } from '../lib/tasksApi'
+import {
+  TASK_STATUSES,
+  loadKanbanBundle,
+  listProjectMembers,
+  computeInsights,
+  isTaskOverdue,
+} from '../lib/tasksApi'
 import './Dashboard.css'
 
 ChartJS.register(ArcElement, CategoryScale, LinearScale, BarElement, Title, Tooltip, Legend)
@@ -23,20 +29,34 @@ export function Dashboard() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
   const [rows, setRows] = useState([])
+  const [projects, setProjects] = useState([])
+  const [memberNames, setMemberNames] = useState({})
+  const [selectedProjectIds, setSelectedProjectIds] = useState([])
 
   const refresh = useCallback(async () => {
     if (!userId) return
     setLoading(true)
     setError('')
     try {
-      const projects = await listProjects(userId)
+      const projectList = await listProjects(userId)
       const bundles = await Promise.all(
-        projects.map(async (p) => {
+        projectList.map(async (p) => {
           try {
             const b = await loadKanbanBundle(p.id, userId)
             return { project: p, ...b }
           } catch {
             return { project: p, tasks: [], comments: [], activity: [] }
+          }
+        })
+      )
+      const names = {}
+      await Promise.all(
+        projectList.map(async (p) => {
+          try {
+            const members = await listProjectMembers(p.id, userId)
+            for (const m of members) names[m.id] = m.name
+          } catch {
+            /* membro opcional para o gráfico */
           }
         })
       )
@@ -51,7 +71,14 @@ export function Dashboard() {
           })
         }
       }
+      const ids = projectList.map((p) => p.id)
+      setProjects(projectList)
+      setMemberNames(names)
       setRows(flat)
+      setSelectedProjectIds((prev) => {
+        const kept = prev.filter((id) => ids.includes(id))
+        return kept.length > 0 ? kept : ids
+      })
     } catch (e) {
       console.error(e)
       setError(e?.message || 'Erro ao montar o painel.')
@@ -64,24 +91,70 @@ export function Dashboard() {
     void refresh()
   }, [refresh])
 
+  const allProjectIds = useMemo(() => projects.map((p) => p.id), [projects])
+  const showingAllProjects =
+    projects.length === 0 ||
+    selectedProjectIds.length === 0 ||
+    selectedProjectIds.length >= projects.length
+
+  const filteredRows = useMemo(() => {
+    if (showingAllProjects) return rows
+    const set = new Set(selectedProjectIds)
+    return rows.filter((r) => set.has(r.projectId))
+  }, [rows, selectedProjectIds, showingAllProjects])
+
   const tasks = useMemo(
     () =>
-      rows.map((row) => {
+      filteredRows.map((row) => {
         const { projectName, projectId, activity: _activity, ...t } = row
         return { ...t, projectName, projectId }
       }),
-    [rows]
+    [filteredRows]
   )
 
   const mergedActivity = useMemo(() => {
     const list = []
-    for (const r of rows) {
+    for (const r of filteredRows) {
       for (const a of r.activity || []) {
         list.push(a)
       }
     }
     return list
-  }, [rows])
+  }, [filteredRows])
+
+  const assigneeLabel = useCallback(
+    (id) => memberNames[id] || `Usuário ${String(id).slice(0, 6)}…`,
+    [memberNames]
+  )
+
+  function selectAllProjects() {
+    setSelectedProjectIds([...allProjectIds])
+  }
+
+  function toggleProject(projectId) {
+    setSelectedProjectIds((prev) => {
+      const all = allProjectIds
+      const isAllSelected =
+        prev.length === 0 || prev.length >= all.length
+
+      if (isAllSelected) {
+        return [projectId]
+      }
+
+      const set = new Set(prev)
+      if (set.has(projectId)) {
+        if (set.size <= 1) return prev
+        set.delete(projectId)
+        return [...set]
+      }
+      if (set.size === 1) {
+        return [projectId]
+      }
+      set.add(projectId)
+      if (set.size >= all.length) return [...all]
+      return [...set]
+    })
+  }
 
   const insights = useMemo(
     () => computeInsights(tasks, mergedActivity, userId),
@@ -112,8 +185,8 @@ export function Dashboard() {
     return [...map.entries()]
       .sort((a, b) => b[1] - a[1])
       .slice(0, 8)
-      .map(([id, n]) => ({ label: `${id.slice(0, 8)}…`, value: n }))
-  }, [tasks])
+      .map(([id, n]) => ({ label: assigneeLabel(id), value: n }))
+  }, [tasks, assigneeLabel])
 
   const barData = {
     labels: doneByAssignee.map((x) => x.label),
@@ -151,7 +224,7 @@ export function Dashboard() {
       const x = String(s ?? '').replace(/"/g, '""')
       return /[;\n"]/.test(x) ? `"${x}"` : x
     }
-    const lines = ['projeto;titulo;status;prioridade;responsavel_id;prazo;descricao']
+    const lines = ['projeto;titulo;status;prioridade;responsavel;prazo;descricao']
     for (const t of tasks) {
       lines.push(
         [
@@ -159,7 +232,7 @@ export function Dashboard() {
           esc(t.title),
           t.status,
           t.priority,
-          t.assigneeId ?? '',
+          esc(t.assigneeId ? assigneeLabel(t.assigneeId) : ''),
           t.dueDate ?? '',
           esc(t.description ?? ''),
         ].join(';')
@@ -203,6 +276,48 @@ export function Dashboard() {
       </p>
 
       {error ? <p className="dashboard__error">{error}</p> : null}
+
+      {projects.length > 1 ? (
+        <section className="dashboard__filter card-block" aria-label="Filtrar por grupo">
+          <h2>Grupos de demandas</h2>
+          <p className="dashboard__filter-hint">
+            Escolha um ou mais projetos para atualizar gráficos, indicadores e exportação.
+          </p>
+          <div className="dashboard__filter-chips" role="group" aria-label="Projetos visíveis">
+            <button
+              type="button"
+              className={`dashboard__filter-chip${showingAllProjects ? ' dashboard__filter-chip--active' : ''}`}
+              aria-pressed={showingAllProjects}
+              onClick={selectAllProjects}
+            >
+              Todos os grupos
+            </button>
+            {projects.map((p) => {
+              const active = !showingAllProjects && selectedProjectIds.includes(p.id)
+              return (
+                <button
+                  key={p.id}
+                  type="button"
+                  className={`dashboard__filter-chip${active ? ' dashboard__filter-chip--active' : ''}`}
+                  aria-pressed={active}
+                  onClick={() => toggleProject(p.id)}
+                >
+                  {p.name}
+                </button>
+              )
+            })}
+          </div>
+          {!showingAllProjects ? (
+            <p className="dashboard__filter-active">
+              Exibindo:{' '}
+              {projects
+                .filter((p) => selectedProjectIds.includes(p.id))
+                .map((p) => p.name)
+                .join(', ')}
+            </p>
+          ) : null}
+        </section>
+      ) : null}
 
       <section className="dashboard__summary card-block" aria-label="Resumo automático">
         <h2>Resumo</h2>

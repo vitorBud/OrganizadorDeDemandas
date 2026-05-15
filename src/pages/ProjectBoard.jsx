@@ -4,7 +4,6 @@ import { useAuth } from '../context/AuthContext'
 import {
   getProjectIfMember,
   isRemoteCollab,
-  newRemoteId,
   persistProjectState,
   leaveProject,
   deleteProject,
@@ -12,14 +11,12 @@ import {
   sendMessageRemote,
   subscribeProjectChannels,
 } from '../lib/collabApi'
-import { generateId } from '../lib/storage'
 import { REMOTE_POLL_INTERVAL_MS } from '../lib/remoteSync'
 import { accentColorForDisplay } from '../lib/userColor'
 import { listProjectMembers } from '../lib/tasksApi'
 import { KanbanBoard } from '../components/KanbanBoard'
+import { ProjectPosts } from '../components/ProjectPosts'
 import './ProjectBoard.css'
-
-const SAVE_DEBOUNCE_MS = 480
 
 export function ProjectBoard() {
   const { projectId } = useParams()
@@ -28,18 +25,16 @@ export function ProjectBoard() {
   const [project, setProject] = useState(null)
   const [chatDraft, setChatDraft] = useState('')
   const [copied, setCopied] = useState(false)
-  const debounceTimerRef = useRef(null)
   const lastWriteRef = useRef(0)
   const projectRef = useRef(null)
   const pollBusyRef = useRef(false)
+  const postsEditingRef = useRef(false)
   const remote = isRemoteCollab()
   const [params, setParams] = useSearchParams()
   const [workspaceTab, setWorkspaceTab] = useState('demandas')
   const [members, setMembers] = useState([])
   const [groupActionBusy, setGroupActionBusy] = useState(false)
   const [groupError, setGroupError] = useState('')
-  const [docDirty, setDocDirty] = useState(false)
-  const [docSaving, setDocSaving] = useState(false)
   const openTaskId = params.get('task')
 
   const setOpenTaskId = useCallback(
@@ -91,7 +86,7 @@ export function ProjectBoard() {
   useEffect(() => {
     if (!remote || !projectId) return
     return subscribeProjectChannels(projectId, (payload) => {
-      if (payload?.blocks && docDirty && displayTab === 'documento') {
+      if (payload?.blocks && postsEditingRef.current && displayTab === 'mural') {
         return
       }
       if (payload?.messages) {
@@ -101,13 +96,13 @@ export function ProjectBoard() {
       if (Date.now() - lastWriteRef.current < 780) return
       void reload()
     })
-  }, [remote, projectId, reload, docDirty, displayTab])
+  }, [remote, projectId, reload, displayTab])
 
   useEffect(() => {
     if (!remote || !projectId || !userId) return
     const tick = () => {
       if (document.visibilityState !== 'visible') return
-      if (docDirty && displayTab === 'documento') return
+      if (postsEditingRef.current && displayTab === 'mural') return
       if (pollBusyRef.current) return
       pollBusyRef.current = true
       void reload().finally(() => {
@@ -123,7 +118,7 @@ export function ProjectBoard() {
       clearInterval(id)
       document.removeEventListener('visibilitychange', onVis)
     }
-  }, [remote, projectId, userId, reload, docDirty, displayTab])
+  }, [remote, projectId, userId, reload, displayTab])
 
   useEffect(() => {
     if (profilesRemoteTick === 0) return
@@ -149,14 +144,7 @@ export function ProjectBoard() {
     }
   }, [projectId, userId, profilesRemoteTick])
 
-  useEffect(
-    () => () => {
-      if (debounceTimerRef.current) clearTimeout(debounceTimerRef.current)
-    },
-    []
-  )
-
-  const runSave = useCallback(
+  const persistBlocks = useCallback(
     async (blocks) => {
       if (!projectId) return
       try {
@@ -164,111 +152,15 @@ export function ProjectBoard() {
         await persistProjectState(projectId, { blocks })
       } catch (e) {
         console.error(e)
+        throw e
       }
     },
     [projectId]
   )
 
-  const scheduleSave = useCallback(
-    (blocks) => {
-      if (!remote) {
-        void runSave(blocks)
-        return
-      }
-      if (debounceTimerRef.current) clearTimeout(debounceTimerRef.current)
-      debounceTimerRef.current = setTimeout(() => {
-        debounceTimerRef.current = null
-        void runSave(blocks)
-      }, SAVE_DEBOUNCE_MS)
-    },
-    [remote, runSave]
-  )
-
-  const flushSave = useCallback(
-    async (blocks) => {
-      if (debounceTimerRef.current) {
-        clearTimeout(debounceTimerRef.current)
-        debounceTimerRef.current = null
-      }
-      await runSave(blocks)
-    },
-    [runSave]
-  )
-
-  const newBlockId = () => (remote ? newRemoteId() : generateId())
-
-  const addBlock = (type) => {
-    if (!project) return
-    const id = newBlockId()
-    const base = { id, type }
-    if (type === 'text') Object.assign(base, { content: '', align: 'left', size: 'md' })
-    if (type === 'image') Object.assign(base, { content: '' })
-    if (type === 'code') Object.assign(base, { content: '', language: '' })
-    const blocks = [...(project.blocks || []), base]
-    setProject({ ...project, blocks })
-    if (remote) {
-      setDocDirty(true)
-    } else {
-      scheduleSave(blocks)
-    }
-  }
-
-  const updateBlock = (id, patch) => {
-    if (!project) return
-    const blocks = project.blocks.map((b) => (b.id === id ? { ...b, ...patch } : b))
-    setProject({ ...project, blocks })
-    if (remote) {
-      setDocDirty(true)
-    } else {
-      scheduleSave(blocks)
-    }
-  }
-
-  const removeBlock = (id) => {
-    if (!project) return
-    const blocks = project.blocks.filter((b) => b.id !== id)
-    setProject({ ...project, blocks })
-    if (remote) {
-      setDocDirty(true)
-    } else {
-      void flushSave(blocks)
-    }
-  }
-
-  const moveBlock = (id, dir) => {
-    if (!project) return
-    const blocks = [...project.blocks]
-    const idx = blocks.findIndex((b) => b.id === id)
-    if (idx < 0) return
-    const j = dir === 'up' ? idx - 1 : idx + 1
-    if (j < 0 || j >= blocks.length) return
-    ;[blocks[idx], blocks[j]] = [blocks[j], blocks[idx]]
-    setProject({ ...project, blocks })
-    if (remote) {
-      setDocDirty(true)
-    } else {
-      void flushSave(blocks)
-    }
-  }
-
-  const saveDocumentBlocks = useCallback(async () => {
-    const blocksToSave = projectRef.current?.blocks
-    if (!projectId || !blocksToSave || !remote || docSaving || !docDirty) return
-    setDocSaving(true)
-    try {
-      await flushSave(blocksToSave)
-      setDocDirty(false)
-    } finally {
-      setDocSaving(false)
-    }
-  }, [projectId, remote, docSaving, docDirty, flushSave])
-
-  const handleImageFile = (blockId, file) => {
-    if (!file?.type?.startsWith('image/')) return
-    const reader = new FileReader()
-    reader.onload = () => updateBlock(blockId, { content: String(reader.result) })
-    reader.readAsDataURL(file)
-  }
+  const handlePostsEditingChange = useCallback((editing) => {
+    postsEditingRef.current = editing
+  }, [])
 
   const sendChat = async (e) => {
     e.preventDefault()
@@ -351,7 +243,6 @@ export function ProjectBoard() {
     }
   }
 
-  const blocks = project?.blocks ?? []
   const messages = useMemo(
     () => [...(project?.messages || [])].sort((a, b) => a.createdAt - b.createdAt),
     [project]
@@ -463,10 +354,10 @@ export function ProjectBoard() {
         <button
           type="button"
           role="tab"
-          aria-selected={displayTab === 'documento'}
-          className={`project-board__tab${displayTab === 'documento' ? ' project-board__tab--active' : ''}`}
+          aria-selected={displayTab === 'mural'}
+          className={`project-board__tab${displayTab === 'mural' ? ' project-board__tab--active' : ''}`}
           onClick={() => {
-            setWorkspaceTab('documento')
+            setWorkspaceTab('mural')
             if (openTaskId) {
               const next = new URLSearchParams(params)
               next.delete('task')
@@ -474,7 +365,7 @@ export function ProjectBoard() {
             }
           }}
         >
-          Documento livre
+          Mural
         </button>
       </div>
 
@@ -488,170 +379,16 @@ export function ProjectBoard() {
               onOpenTaskId={setOpenTaskId}
             />
           ) : (
-        <section className="project-board__canvas" aria-label="Quadro do projeto">
-          <div className="project-board__toolbar">
-            <span className="project-board__toolbar-label">Adicionar bloco:</span>
-            <button type="button" className="btn btn--ghost btn--sm" onClick={() => addBlock('text')}>
-              Texto
-            </button>
-            <button type="button" className="btn btn--ghost btn--sm" onClick={() => addBlock('image')}>
-              Imagem
-            </button>
-            <button type="button" className="btn btn--ghost btn--sm" onClick={() => addBlock('code')}>
-              Código
-            </button>
-            {remote ? (
-              <button
-                type="button"
-                className="btn btn--primary btn--sm"
-                onClick={() => void saveDocumentBlocks()}
-                disabled={!docDirty || docSaving}
-                title="Sincroniza o documento para os demais membros"
-              >
-                {docSaving ? 'Salvando...' : docDirty ? 'Salvar documento' : 'Documento salvo'}
-              </button>
-            ) : null}
-          </div>
-
-          {blocks.length === 0 ? (
-            <p className="project-board__hint">Nenhum bloco ainda. Adicione texto, imagem ou código acima.</p>
-          ) : (
-            <ul className="project-board__blocks">
-              {blocks.map((b, index) => (
-                <li key={b.id} className="block-card">
-                  <div className="block-card__controls">
-                    <span className="block-card__type">
-                      {b.type === 'text' ? 'Texto' : b.type === 'image' ? 'Imagem' : 'Código'}
-                    </span>
-                    <div className="block-card__actions">
-                      <button
-                        type="button"
-                        className="btn btn--icon"
-                        aria-label="Mover para cima"
-                        disabled={index === 0}
-                        onClick={() => moveBlock(b.id, 'up')}
-                      >
-                        ↑
-                      </button>
-                      <button
-                        type="button"
-                        className="btn btn--icon"
-                        aria-label="Mover para baixo"
-                        disabled={index === blocks.length - 1}
-                        onClick={() => moveBlock(b.id, 'down')}
-                      >
-                        ↓
-                      </button>
-                      <button
-                        type="button"
-                        className="btn btn--icon btn--danger"
-                        aria-label="Remover bloco"
-                        onClick={() => removeBlock(b.id)}
-                      >
-                        ✕
-                      </button>
-                    </div>
-                  </div>
-
-                  {b.type === 'text' && (
-                    <>
-                      <div className="block-card__format">
-                        <label>
-                          Alinhamento
-                          <select
-                            value={b.align || 'left'}
-                            onChange={(e) => updateBlock(b.id, { align: e.target.value })}
-                            className="block-card__select"
-                          >
-                            <option value="left">Esquerda</option>
-                            <option value="center">Centro</option>
-                            <option value="right">Direita</option>
-                          </select>
-                        </label>
-                        <label>
-                          Tamanho
-                          <select
-                            value={b.size || 'md'}
-                            onChange={(e) => updateBlock(b.id, { size: e.target.value })}
-                            className="block-card__select"
-                          >
-                            <option value="sm">Pequeno</option>
-                            <option value="md">Médio</option>
-                            <option value="lg">Grande</option>
-                          </select>
-                        </label>
-                      </div>
-                      <textarea
-                        className={`block-card__textarea block-card__textarea--${b.size || 'md'}`}
-                        style={{ textAlign: b.align || 'left' }}
-                        value={b.content || ''}
-                        onChange={(e) => updateBlock(b.id, { content: e.target.value })}
-                        placeholder="Escreva anotações, demandas ou checklists…"
-                        rows={4}
-                      />
-                    </>
-                  )}
-
-                  {b.type === 'image' && (
-                    <div className="block-card__image-wrap">
-                      {b.content ? (
-                        <img src={b.content} alt="" className="block-card__image" />
-                      ) : (
-                        <label className="block-card__file-label">
-                          Escolher imagem
-                          <input
-                            type="file"
-                            accept="image/*"
-                            className="block-card__file"
-                            onChange={(e) => handleImageFile(b.id, e.target.files?.[0])}
-                          />
-                        </label>
-                      )}
-                      {b.content ? (
-                        <button
-                          type="button"
-                          className="btn btn--ghost btn--sm block-card__replace"
-                          onClick={() => {
-                            const blocks = (projectRef.current?.blocks ?? []).map((x) =>
-                              x.id === b.id ? { ...x, content: '' } : x
-                            )
-                            setProject((prev) => (prev ? { ...prev, blocks } : prev))
-                            void flushSave(blocks)
-                          }}
-                        >
-                          Trocar imagem
-                        </button>
-                      ) : null}
-                    </div>
-                  )}
-
-                  {b.type === 'code' && (
-                    <div className="block-card__code-wrap">
-                      <label className="block-card__code-lang">
-                        Linguagem (opcional)
-                        <input
-                          type="text"
-                          value={b.language || ''}
-                          onChange={(e) => updateBlock(b.id, { language: e.target.value })}
-                          placeholder="js, sql, python…"
-                          className="block-card__input"
-                        />
-                      </label>
-                      <textarea
-                        className="block-card__code"
-                        value={b.content || ''}
-                        onChange={(e) => updateBlock(b.id, { content: e.target.value })}
-                        placeholder="Cole ou digite código aqui…"
-                        rows={8}
-                        spellCheck={false}
-                      />
-                    </div>
-                  )}
-                </li>
-              ))}
-            </ul>
-          )}
-        </section>
+            <ProjectPosts
+              blocks={project.blocks ?? []}
+              members={members}
+              user={user}
+              userId={userId}
+              ownerId={project.ownerId}
+              onBlocksChange={(blocks) => setProject((prev) => (prev ? { ...prev, blocks } : prev))}
+              onPersist={persistBlocks}
+              onEditingChange={handlePostsEditingChange}
+            />
           )}
         </div>
 
