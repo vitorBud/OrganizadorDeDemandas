@@ -96,6 +96,52 @@
   gap: 8px;
 }
 
+.app-shell__connection {
+  min-height: 34px;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 10px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: color-mix(in srgb, var(--surface) 78%, transparent);
+  color: var(--text-h);
+  text-decoration: none;
+  font-size: 0.88rem;
+  font-weight: 700;
+}
+
+.app-shell__connection:hover {
+  border-color: var(--accent-border);
+  color: var(--accent-hot);
+  background: color-mix(in srgb, var(--accent-bg) 54%, var(--surface));
+}
+
+.app-shell__connection-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 999px;
+  background: var(--text-muted);
+  box-shadow: 0 0 10px color-mix(in srgb, var(--text-muted) 65%, transparent);
+}
+
+.app-shell__connection--connected .app-shell__connection-dot {
+  background: var(--success);
+  box-shadow: 0 0 12px color-mix(in srgb, var(--success) 72%, transparent);
+}
+
+.app-shell__connection--connecting .app-shell__connection-dot,
+.app-shell__connection--reconnecting .app-shell__connection-dot {
+  background: var(--warning);
+  box-shadow: 0 0 12px color-mix(in srgb, var(--warning) 72%, transparent);
+}
+
+.app-shell__connection--offline .app-shell__connection-dot,
+.app-shell__connection--error .app-shell__connection-dot {
+  background: var(--destructive);
+  box-shadow: 0 0 12px color-mix(in srgb, var(--destructive) 72%, transparent);
+}
+
 .app-shell__notif-wrap {
   position: relative;
 }
@@ -204,6 +250,14 @@
 
 .app-shell__body--wide {
   max-width: min(1680px, 100%);
+}
+
+.app-shell__route-loading {
+  min-height: 220px;
+  display: grid;
+  place-items: center;
+  color: var(--text-muted);
+  font-weight: 700;
 }
 
 @media (max-width: 860px) {

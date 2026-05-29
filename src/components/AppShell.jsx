@@ -1,7 +1,8 @@
-import { useCallback, useEffect, useRef, useState } from 'react'
+import { Suspense, useCallback, useEffect, useRef, useState } from 'react'
 import { Link, NavLink, Outlet, useLocation, useNavigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import { useTheme } from '../context/ThemeContext'
+import { useRealtimeStatus } from '../context/RealtimeStatusContext'
 import { isRemoteCollab } from '../lib/collabApi'
 import { listMyNotifications, markNotificationsRead, subscribeNotificationChannel } from '../lib/tasksApi'
 import { accentColorForDisplay } from '../lib/userColor'
@@ -10,6 +11,7 @@ import './AppShell.css'
 export function AppShell() {
   const { user, userId, logout } = useAuth()
   const { preference, setPreference, effective } = useTheme()
+  const realtimeStatus = useRealtimeStatus()
   const navigate = useNavigate()
   const location = useLocation()
   const remote = isRemoteCollab()
@@ -106,6 +108,15 @@ export function AppShell() {
           </NavLink>
         </nav>
         <div className="app-shell__actions">
+          <Link
+            to="/app/status"
+            className={`app-shell__connection app-shell__connection--${realtimeStatus.state}`}
+            title={realtimeStatus.detail}
+          >
+            <span className="app-shell__connection-dot" aria-hidden />
+            {realtimeStatus.label}
+          </Link>
+
           {remote ? (
             <div className="app-shell__notif-wrap" ref={notifRef}>
               <button
@@ -177,7 +188,9 @@ export function AppShell() {
         </div>
       </header>
       <div className={`app-shell__body${wideLayout ? ' app-shell__body--wide' : ''}`}>
-        <Outlet />
+        <Suspense fallback={<div className="app-shell__route-loading">Carregando…</div>}>
+          <Outlet />
+        </Suspense>
       </div>
     </div>
   )

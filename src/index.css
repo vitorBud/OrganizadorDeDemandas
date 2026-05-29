@@ -43,6 +43,12 @@
   --accent-cool: #00d4ff;
   --accent-bg: rgba(255, 140, 0, 0.12);
   --accent-border: rgba(255, 140, 0, 0.34);
+  --button-primary-start: #ffb347;
+  --button-primary-mid: #ff8c00;
+  --button-primary-end: #c35e00;
+  --button-primary-text: #130b00;
+  --button-primary-border: rgba(255, 179, 71, 0.72);
+  --button-primary-glow: rgba(255, 140, 0, 0.2);
   --success: #4ade80;
   --warning: #facc15;
   --destructive: #ff3366;
@@ -89,6 +95,12 @@
   --accent-cool: #007991;
   --accent-bg: rgba(233, 113, 0, 0.1);
   --accent-border: rgba(233, 113, 0, 0.34);
+  --button-primary-start: #ff8c00;
+  --button-primary-mid: #e97100;
+  --button-primary-end: #b65000;
+  --button-primary-text: #ffffff;
+  --button-primary-border: rgba(233, 113, 0, 0.46);
+  --button-primary-glow: rgba(233, 113, 0, 0.18);
   --destructive: #d61f4c;
   --destructive-bg: rgba(214, 31, 76, 0.1);
   --destructive-border: rgba(214, 31, 76, 0.3);
@@ -308,11 +320,16 @@ code {
 }
 
 .btn--primary {
-  background: linear-gradient(180deg, var(--accent-hot) 0%, var(--accent) 54%, #c35e00 100%);
-  border-color: rgba(255, 179, 71, 0.72);
-  color: #130b00;
+  background: linear-gradient(
+    180deg,
+    var(--button-primary-start) 0%,
+    var(--button-primary-mid) 54%,
+    var(--button-primary-end) 100%
+  );
+  border-color: var(--button-primary-border);
+  color: var(--button-primary-text);
   box-shadow:
-    0 0 18px rgba(255, 140, 0, 0.18),
+    0 0 18px var(--button-primary-glow),
     inset 0 1px 0 rgba(255, 255, 255, 0.34);
 }
 
@@ -320,7 +337,7 @@ code {
   transform: translateY(-1px);
   border-color: var(--accent-hot);
   box-shadow:
-    0 0 26px rgba(255, 140, 0, 0.25),
+    0 0 26px var(--button-primary-glow),
     inset 0 1px 0 rgba(255, 255, 255, 0.38);
 }
 

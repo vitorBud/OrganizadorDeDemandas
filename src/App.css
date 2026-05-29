@@ -1,1 +1,9 @@
 /* App-level layout helpers; page-specific styles live next to their components */
+
+.route-fallback {
+  min-height: 100svh;
+  display: grid;
+  place-items: center;
+  color: var(--text-muted);
+  font-weight: 700;
+}
