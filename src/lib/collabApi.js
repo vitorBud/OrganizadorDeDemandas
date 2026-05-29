@@ -1,5 +1,6 @@
 import { supabase } from './supabaseClient'
 import { fetchProfilesDisplayMapByIds } from './profileRemote'
+import { POST_BLOCK_DB_TYPE, POST_BLOCK_KIND, POST_BLOCK_TYPE } from './projectPosts'
 import { normalizeAccentColor } from './userColor'
 import {
   getProjects,
@@ -35,6 +36,7 @@ function mapBlockRow(row) {
   return {
     id: row.id,
     type: row.type,
+    kind: meta.kind ?? '',
     content: row.content ?? '',
     align: meta.align ?? 'left',
     size: meta.size ?? 'md',
@@ -48,12 +50,14 @@ function mapBlockRow(row) {
 }
 
 function blockToDb(projectId, block, sortOrder) {
+  const isPost = block.type === POST_BLOCK_TYPE || block.kind === POST_BLOCK_KIND
   return {
     id: block.id,
     project_id: projectId,
-    type: block.type,
+    type: isPost ? POST_BLOCK_DB_TYPE : block.type,
     content: block.content ?? '',
     meta: {
+      kind: isPost ? POST_BLOCK_KIND : block.kind,
       align: block.align,
       size: block.size,
       language: block.language,

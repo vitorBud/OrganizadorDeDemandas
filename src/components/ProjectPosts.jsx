@@ -46,9 +46,15 @@ export function ProjectPosts({
   const postBlocksOnly = () => (blocks ?? []).filter((b) => isPostBlock(b))
 
   async function applyPostBlocks(nextPostBlocks) {
+    const previousBlocks = blocks ?? []
     const merged = mergePostsIntoBlocks(blocks, nextPostBlocks)
     onBlocksChange(merged)
-    await onPersist(merged)
+    try {
+      await onPersist(merged)
+    } catch (err) {
+      onBlocksChange(previousBlocks)
+      throw err
+    }
   }
 
   function canModifyPost(post) {

@@ -15,6 +15,7 @@ import {
   useSortable,
 } from '@dnd-kit/sortable'
 import { CSS } from '@dnd-kit/utilities'
+import { CalendarDays, ExternalLink, GripVertical, MessageSquare, UserRound } from 'lucide-react'
 import { useAuth } from '../context/AuthContext'
 import { isRemoteCollab } from '../lib/collabApi'
 import { REMOTE_POLL_INTERVAL_MS } from '../lib/remoteSync'
@@ -45,10 +46,6 @@ function priorityBorderColor(id) {
   return '#eab308'
 }
 
-function statusLabel(id) {
-  return TASK_STATUSES.find((s) => s.id === id)?.label ?? id
-}
-
 function SortableTaskCard({ task, members, commentCount, onOpen }) {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
     id: task.id,
@@ -58,6 +55,11 @@ function SortableTaskCard({ task, members, commentCount, onOpen }) {
   const overdue = isTaskOverdue(task)
   const pr = priorityMeta(task.priority)
   const priorityColor = priorityBorderColor(task.priority)
+  const description = task.description?.trim()
+  const shortDescription =
+    description && description.length > 96 ? `${description.slice(0, 96)}...` : description
+  const creatorName = creator?.name || '—'
+  const dueText = task.dueDate ? (overdue ? `Atrasada ${task.dueDate}` : task.dueDate) : 'Sem prazo'
 
   const assigneeColor = assignee
     ? accentColorForDisplay(assignee.accentColor, assignee.id)
@@ -78,7 +80,7 @@ function SortableTaskCard({ task, members, commentCount, onOpen }) {
 
   return (
     <article ref={setNodeRef} style={style} className={`kanban-card${overdue ? ' kanban-card--overdue' : ''}`}>
-      <div className="kanban-card__row">
+      <div className="kanban-card__topline">
         <button
           type="button"
           className="kanban-card__handle"
@@ -87,67 +89,78 @@ function SortableTaskCard({ task, members, commentCount, onOpen }) {
           aria-label="Arrastar tarefa"
           title="Arrastar"
         >
-          ⠿
+          <GripVertical size={16} strokeWidth={2.35} aria-hidden />
         </button>
-        <button type="button" className="kanban-card__open" onClick={() => onOpen(task)}>
-          Abrir
-        </button>
-      </div>
-      <div className="kanban-card__head">
-        <span className="kanban-card__priority" title={pr.label}>
-          {pr.emoji}
+        <span className="kanban-card__priority-chip" title={`Prioridade: ${pr.label}`}>
+          <span aria-hidden>{pr.emoji}</span>
+          <span>{pr.label}</span>
         </span>
-        <h3 className="kanban-card__title">{task.title}</h3>
+        <button
+          type="button"
+          className="kanban-card__open"
+          onClick={() => onOpen(task)}
+          aria-label={`Abrir demanda ${task.title}`}
+          title="Abrir demanda"
+        >
+          <ExternalLink size={14} strokeWidth={2.3} aria-hidden />
+          <span>Abrir</span>
+        </button>
       </div>
-      <div className="kanban-card__meta">
-        <span>Status: {statusLabel(task.status)}</span>
-        <span>Prioridade: {pr.label}</span>
+      <h3 className="kanban-card__title">{task.title}</h3>
+      {shortDescription ? <p className="kanban-card__desc">{shortDescription}</p> : null}
+      <div className="kanban-card__quick">
+        <span className={`kanban-card__chip${overdue ? ' kanban-card__chip--danger' : ''}`}>
+          <CalendarDays size={14} strokeWidth={2.25} aria-hidden />
+          {task.dueDate ? <time dateTime={task.dueDate}>{dueText}</time> : <span>{dueText}</span>}
+        </span>
+        <span className="kanban-card__chip" title="Comentários">
+          <MessageSquare size={14} strokeWidth={2.25} aria-hidden />
+          <span>{commentCount}</span>
+        </span>
       </div>
-      {task.description ? <p className="kanban-card__desc">{task.description.slice(0, 120)}</p> : null}
-      {task.dueDate ? (
-        <time className="kanban-card__due" dateTime={task.dueDate}>
-          Prazo: {task.dueDate}
-          {overdue ? ' · atrasada' : ''}
-        </time>
-      ) : null}
-      {assignee ? (
-        <div className="kanban-card__assignee">
-          <span
-            className="kanban-card__avatar"
-            aria-hidden
-            style={{
-              background: `${assigneeColor}33`,
-              color: assigneeColor,
-              borderColor: `${assigneeColor}66`,
-            }}
-          >
-            {(assignee.name || '?').slice(0, 1).toUpperCase()}
+      <div className="kanban-card__people">
+        {assignee ? (
+          <span className="kanban-card__person" title={`Responsável: ${assignee.name}`}>
+            <span
+              className="kanban-card__avatar"
+              aria-hidden
+              style={{
+                background: `${assigneeColor}33`,
+                color: assigneeColor,
+                borderColor: `${assigneeColor}66`,
+              }}
+            >
+              {(assignee.name || '?').slice(0, 1).toUpperCase()}
+            </span>
+            <span className="kanban-card__person-name" style={{ color: assigneeColor }}>
+              {assignee.name}
+            </span>
           </span>
-          <span className="kanban-card__assignee-name" style={{ color: assigneeColor }}>
-            Responsável: {assignee.name}
+        ) : (
+          <span className="kanban-card__person kanban-card__person--muted">
+            <UserRound size={14} strokeWidth={2.25} aria-hidden />
+            <span>Sem responsável</span>
           </span>
-        </div>
-      ) : (
-        <p className="kanban-card__unassigned">Sem responsável</p>
-      )}
-      <div className="kanban-card__foot">
-        <span>Criada por: {creator?.name || '—'}</span>
-        <span>Comentários: {commentCount}</span>
+        )}
+        <span className="kanban-card__creator" title={`Criada por: ${creatorName}`}>
+          Criada por {creatorName}
+        </span>
       </div>
     </article>
   )
 }
 
-function KanbanColumn({ statusId, label, children }) {
+function KanbanColumn({ statusId, label, count, children }) {
   const { setNodeRef, isOver } = useDroppable({ id: statusId })
   return (
     <section
       ref={setNodeRef}
       className={`kanban-column${isOver ? ' kanban-column--over' : ''}`}
-      aria-label={label}
+      aria-label={`${label}, ${count} demandas`}
     >
       <header className="kanban-column__head">
         <h2 className="kanban-column__title">{label}</h2>
+        <span className="kanban-column__count">{count}</span>
       </header>
       <div className="kanban-column__body">{children}</div>
     </section>
@@ -509,7 +522,7 @@ export function KanbanBoard({ projectId, user, openTaskId, onOpenTaskId }) {
       >
         <div className="kanban-columns">
           {TASK_STATUSES.map(({ id: colId, label }) => (
-            <KanbanColumn key={colId} statusId={colId} label={label}>
+            <KanbanColumn key={colId} statusId={colId} label={label} count={grouped[colId].length}>
               <SortableContext items={grouped[colId].map((t) => t.id)} strategy={verticalListSortingStrategy}>
                 <ul className="kanban-column__list">
                   {grouped[colId].map((task) => (
@@ -531,10 +544,13 @@ export function KanbanBoard({ projectId, user, openTaskId, onOpenTaskId }) {
         <DragOverlay>
           {activeTask ? (
             <div className="kanban-card kanban-card--overlay">
-              <div className="kanban-card__head">
-                <span className="kanban-card__priority">{priorityMeta(activeTask.priority).emoji}</span>
-                <h3 className="kanban-card__title">{activeTask.title}</h3>
+              <div className="kanban-card__topline">
+                <span className="kanban-card__priority-chip">
+                  <span aria-hidden>{priorityMeta(activeTask.priority).emoji}</span>
+                  <span>{priorityMeta(activeTask.priority).label}</span>
+                </span>
               </div>
+              <h3 className="kanban-card__title">{activeTask.title}</h3>
             </div>
           ) : null}
         </DragOverlay>

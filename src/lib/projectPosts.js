@@ -1,10 +1,16 @@
 export const POST_BLOCK_TYPE = 'post'
+export const POST_BLOCK_DB_TYPE = 'text'
+export const POST_BLOCK_KIND = 'post'
 
 /**
  * @param {object} block
  */
 export function isPostBlock(block) {
-  return block?.type === POST_BLOCK_TYPE
+  if (!block) return false
+  if (block.type === POST_BLOCK_TYPE) return true
+  if (block.type !== POST_BLOCK_DB_TYPE) return false
+  if (block.kind === POST_BLOCK_KIND || block.meta?.kind === POST_BLOCK_KIND) return true
+  return Boolean(block.title && (block.authorId || block.authorName || block.createdAt))
 }
 
 /**
@@ -12,10 +18,11 @@ export function isPostBlock(block) {
  */
 export function normalizePostBlock(block) {
   if (!block) return null
-  if (block.type === POST_BLOCK_TYPE) {
+  if (isPostBlock(block)) {
     return {
       id: block.id,
       type: POST_BLOCK_TYPE,
+      kind: POST_BLOCK_KIND,
       title: String(block.title ?? '').trim(),
       content: String(block.content ?? ''),
       authorId: block.authorId ?? null,
@@ -72,7 +79,8 @@ export function createPostBlock({ id, userId, userName, title, body }) {
   const now = Date.now()
   return {
     id,
-    type: POST_BLOCK_TYPE,
+    type: POST_BLOCK_DB_TYPE,
+    kind: POST_BLOCK_KIND,
     title: title.trim(),
     content: body.trim(),
     authorId: userId,
@@ -89,7 +97,8 @@ export function createPostBlock({ id, userId, userName, title, body }) {
 export function patchPostBlock(post, { title, body }) {
   return {
     ...post,
-    type: POST_BLOCK_TYPE,
+    type: POST_BLOCK_DB_TYPE,
+    kind: POST_BLOCK_KIND,
     title: title.trim(),
     content: body.trim(),
     updatedAt: Date.now(),
