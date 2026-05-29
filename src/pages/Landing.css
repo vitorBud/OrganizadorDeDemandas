@@ -6,15 +6,40 @@
 
 .landing__main {
   flex: 1;
-  max-width: 44rem;
+  max-width: 980px;
   margin: 0 auto;
-  padding: clamp(32px, 6vw, 56px) clamp(20px, 4vw, 28px) 80px;
+  padding: clamp(48px, 8vw, 86px) clamp(20px, 4vw, 32px) 80px;
   width: 100%;
-  box-sizing: border-box;
 }
 
 .landing__hero {
-  margin-bottom: 3.25rem;
+  position: relative;
+  margin-bottom: 26px;
+  padding-bottom: clamp(34px, 8vw, 72px);
+}
+
+.landing__hero::after {
+  content: '';
+  display: block;
+  width: min(620px, 100%);
+  height: clamp(120px, 20vw, 210px);
+  margin-top: clamp(30px, 6vw, 48px);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  background:
+    linear-gradient(90deg, rgba(255, 140, 0, 0.46) 0 2px, transparent 2px 100%),
+    repeating-linear-gradient(90deg, rgba(255, 255, 255, 0.08) 0 1px, transparent 1px 56px),
+    repeating-linear-gradient(0deg, rgba(255, 255, 255, 0.06) 0 1px, transparent 1px 44px),
+    linear-gradient(135deg, rgba(255, 140, 0, 0.14), rgba(0, 212, 255, 0.08) 54%, rgba(255, 255, 255, 0.04));
+  box-shadow: var(--shadow-lift);
+}
+
+:root[data-theme='light'] .landing__hero::after {
+  background:
+    linear-gradient(90deg, rgba(233, 113, 0, 0.6) 0 2px, transparent 2px 100%),
+    repeating-linear-gradient(90deg, rgba(17, 24, 39, 0.09) 0 1px, transparent 1px 56px),
+    repeating-linear-gradient(0deg, rgba(17, 24, 39, 0.07) 0 1px, transparent 1px 44px),
+    linear-gradient(135deg, rgba(233, 113, 0, 0.16), rgba(0, 121, 145, 0.1) 54%, rgba(255, 255, 255, 0.74));
 }
 
 .landing__badge {
@@ -22,29 +47,29 @@
   align-items: center;
   margin: 0 0 1rem;
   padding: 6px 12px;
-  font-size: 0.6875rem;
-  font-weight: 600;
+  font-size: 0.82rem;
+  font-weight: 700;
   text-transform: uppercase;
-  letter-spacing: 0.1em;
-  color: var(--accent);
-  background: var(--accent-bg);
+  color: var(--accent-hot);
+  background: color-mix(in srgb, var(--accent-bg) 80%, transparent);
   border: 1px solid var(--accent-border);
   border-radius: 999px;
 }
 
 .landing__title {
+  max-width: 740px;
   font-family: var(--font-display);
-  font-weight: 700;
-  font-size: clamp(1.85rem, 4.5vw, 2.45rem);
-  line-height: 1.15;
-  margin: 0 0 1.15rem;
-  letter-spacing: -0.035em;
+  font-weight: 400;
+  font-size: clamp(2.2rem, 6.2vw, 4.8rem);
+  line-height: 1.02;
+  margin: 0 0 1rem;
   color: var(--text-h);
 }
 
 .landing__lead {
-  font-size: 1.05rem;
-  line-height: 1.65;
+  max-width: 700px;
+  font-size: clamp(1.08rem, 2vw, 1.24rem);
+  line-height: 1.55;
   margin: 0 0 1.75rem;
   color: var(--text);
 }
@@ -57,19 +82,20 @@
 }
 
 .landing__features {
-  padding: 1.75rem 1.25rem 1.5rem;
+  padding: 20px;
   border: 1px solid var(--border);
   border-radius: var(--radius-lg);
-  background: color-mix(in srgb, var(--surface) 94%, transparent);
+  background: var(--panel-gradient);
   box-shadow: var(--shadow);
+  backdrop-filter: blur(14px) saturate(1.12);
+  -webkit-backdrop-filter: blur(14px) saturate(1.12);
 }
 
 .landing__features-title {
   font-family: var(--font-sans);
-  font-size: 0.8125rem;
-  font-weight: 600;
+  font-size: 0.9rem;
+  font-weight: 700;
   text-transform: uppercase;
-  letter-spacing: 0.06em;
   color: var(--text-muted);
   margin: 0 0 1rem;
 }
@@ -78,28 +104,35 @@
   margin: 0;
   padding: 0;
   list-style: none;
+  display: grid;
+  gap: 12px;
+}
+
+@media (min-width: 780px) {
+  .landing__list {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
 }
 
 .landing__list li {
   position: relative;
-  padding-left: 1.25rem;
-  margin-bottom: 0.85rem;
+  padding: 14px 14px 14px 35px;
+  min-height: 100%;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  background: color-mix(in srgb, var(--bg) 62%, transparent);
   font-size: 0.98rem;
-  line-height: 1.55;
+  line-height: 1.4;
   color: var(--text);
-}
-
-.landing__list li:last-child {
-  margin-bottom: 0;
 }
 
 .landing__bullet {
   position: absolute;
-  left: 0;
-  top: 0.55em;
-  width: 6px;
-  height: 6px;
+  left: 14px;
+  top: 20px;
+  width: 8px;
+  height: 8px;
   border-radius: 50%;
   background: var(--accent);
-  opacity: 0.85;
+  box-shadow: 0 0 10px rgba(255, 140, 0, 0.72);
 }

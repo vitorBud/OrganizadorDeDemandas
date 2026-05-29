@@ -157,6 +157,37 @@ create policy app_notifications_update on public.app_notifications
 
 grant execute on function public.is_project_member(uuid, uuid) to authenticated;
 
+-- Reordenação/mudança de coluna em lote.
+-- Evita que o Realtime publique estados intermediários enquanto o usuário arrasta cards.
+create or replace function public.reorder_project_tasks(p_project_id uuid, p_items jsonb)
+returns void
+language plpgsql
+security definer
+set search_path = public
+as $$
+begin
+  if not public.is_project_member(p_project_id, auth.uid()) then
+    raise exception 'Sem acesso ao projeto.' using errcode = '42501';
+  end if;
+
+  update public.tasks t
+     set status = item.status,
+         sort_order = item.sort_order,
+         updated_at = now()
+    from (
+      select
+        (value->>'id')::uuid as id,
+        value->>'status' as status,
+        (value->>'sortOrder')::int as sort_order
+      from jsonb_array_elements(coalesce(p_items, '[]'::jsonb))
+    ) as item
+   where t.project_id = p_project_id
+     and t.id = item.id;
+end;
+$$;
+
+grant execute on function public.reorder_project_tasks(uuid, jsonb) to authenticated;
+
 -- Realtime (rode no painel se a linha abaixo falhar por duplicidade):
 -- alter publication supabase_realtime add table public.tasks;
 -- alter publication supabase_realtime add table public.task_comments;

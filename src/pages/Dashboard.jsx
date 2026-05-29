@@ -12,6 +12,7 @@ import {
 } from 'chart.js'
 import { Doughnut, Bar } from 'react-chartjs-2'
 import { useAuth } from '../context/AuthContext'
+import { useTheme } from '../context/ThemeContext'
 import { listProjects } from '../lib/collabApi'
 import {
   TASK_STATUSES,
@@ -26,6 +27,7 @@ ChartJS.register(ArcElement, CategoryScale, LinearScale, BarElement, Title, Tool
 
 export function Dashboard() {
   const { userId } = useAuth()
+  const { effective } = useTheme()
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
   const [rows, setRows] = useState([])
@@ -161,6 +163,22 @@ export function Dashboard() {
     [tasks, mergedActivity, userId]
   )
 
+  const chartColors = useMemo(() => {
+    const styles = getComputedStyle(document.documentElement)
+    const read = (name, fallback) => styles.getPropertyValue(name).trim() || fallback
+    return {
+      text: read('--text', effective === 'dark' ? 'rgba(255,255,255,0.7)' : '#4b5563'),
+      muted: read('--text-muted', effective === 'dark' ? 'rgba(255,255,255,0.48)' : '#6b7280'),
+      border: read('--border', effective === 'dark' ? 'rgba(255,255,255,0.1)' : 'rgba(17,24,39,0.12)'),
+      accent: read('--accent', '#ff8c00'),
+      accentHot: read('--accent-hot', '#ffb347'),
+      accentCool: read('--accent-cool', '#00d4ff'),
+      success: read('--success', '#4ade80'),
+      warning: read('--warning', '#facc15'),
+      surface: read('--surface', 'rgba(17,19,24,0.86)'),
+    }
+  }, [effective])
+
   const statusLabels = TASK_STATUSES.map((s) => s.label)
   const statusCounts = TASK_STATUSES.map((s) => tasks.filter((t) => t.status === s.id).length)
 
@@ -169,9 +187,14 @@ export function Dashboard() {
     datasets: [
       {
         data: statusCounts,
-        backgroundColor: ['#a1a1aa', '#818cf8', '#fbbf24', '#34d399'],
+        backgroundColor: [
+          'rgba(255,255,255,0.32)',
+          chartColors.accentCool,
+          chartColors.warning,
+          chartColors.success,
+        ],
         borderWidth: 1,
-        borderColor: 'var(--border)',
+        borderColor: chartColors.border,
       },
     ],
   }
@@ -194,8 +217,8 @@ export function Dashboard() {
       {
         label: 'Concluídas (total)',
         data: doneByAssignee.map((x) => x.value),
-        backgroundColor: 'color-mix(in srgb, var(--accent) 55%, var(--surface))',
-        borderColor: 'var(--accent-border)',
+        backgroundColor: chartColors.accent,
+        borderColor: chartColors.accentHot,
         borderWidth: 1,
       },
     ],
@@ -349,7 +372,7 @@ export function Dashboard() {
               <Doughnut
                 data={doughnutData}
                 options={{
-                  plugins: { legend: { position: 'bottom' } },
+                  plugins: { legend: { position: 'bottom', labels: { color: chartColors.text } } },
                   maintainAspectRatio: false,
                 }}
               />
@@ -369,8 +392,8 @@ export function Dashboard() {
                   maintainAspectRatio: false,
                   plugins: { legend: { display: false } },
                   scales: {
-                    x: { ticks: { color: 'var(--text)' }, grid: { color: 'var(--border)' } },
-                    y: { ticks: { color: 'var(--text)' }, grid: { color: 'var(--border)' } },
+                    x: { ticks: { color: chartColors.text }, grid: { color: chartColors.border } },
+                    y: { ticks: { color: chartColors.text }, grid: { color: chartColors.border } },
                   },
                 }}
               />

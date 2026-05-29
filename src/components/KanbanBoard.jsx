@@ -177,6 +177,8 @@ export function KanbanBoard({ projectId, user, openTaskId, onOpenTaskId }) {
   const [filterText, setFilterText] = useState('')
   const pollBusyRef = useRef(false)
   const draggingRef = useRef(false)
+  const reorderBusyRef = useRef(false)
+  const deferredReloadRef = useRef(false)
 
   const remote = isRemoteCollab()
 
@@ -190,11 +192,22 @@ export function KanbanBoard({ projectId, user, openTaskId, onOpenTaskId }) {
     if (!projectId || !userId) return
     try {
       const bundle = await loadKanbanBundle(projectId, userId)
+      let mems = null
+      let memberError = null
+      try {
+        mems = await listProjectMembers(projectId, userId)
+      } catch (e) {
+        memberError = e
+      }
+      if (draggingRef.current || reorderBusyRef.current) {
+        deferredReloadRef.current = true
+        return
+      }
       setTasks(bundle.tasks)
       setComments(bundle.comments)
       setActivity(bundle.activity)
-      const mems = await listProjectMembers(projectId, userId)
-      setMembers(mems)
+      if (mems) setMembers(mems)
+      if (memberError) throw memberError
       setError('')
     } catch (e) {
       console.error(e)
@@ -207,6 +220,20 @@ export function KanbanBoard({ projectId, user, openTaskId, onOpenTaskId }) {
       setLoading(false)
     }
   }, [projectId, userId])
+
+  const requestReload = useCallback(() => {
+    if (draggingRef.current || reorderBusyRef.current) {
+      deferredReloadRef.current = true
+      return
+    }
+    void reload()
+  }, [reload])
+
+  const flushDeferredReload = useCallback(() => {
+    if (!deferredReloadRef.current || reorderBusyRef.current) return
+    deferredReloadRef.current = false
+    void reload()
+  }, [reload])
 
   useEffect(() => {
     let alive = true
@@ -223,23 +250,27 @@ export function KanbanBoard({ projectId, user, openTaskId, onOpenTaskId }) {
   useEffect(() => {
     if (!remote || !projectId) return
     return subscribeTaskChannels(projectId, () => {
-      void reload()
+      requestReload()
     })
-  }, [remote, projectId, reload])
+  }, [remote, projectId, requestReload])
 
   useEffect(() => {
     if (profilesRemoteTick === 0) return
     if (!remote || !projectId || !userId) return
     queueMicrotask(() => {
-      void reload()
+      requestReload()
     })
-  }, [profilesRemoteTick, remote, projectId, userId, reload])
+  }, [profilesRemoteTick, remote, projectId, userId, requestReload])
 
   useEffect(() => {
     if (!remote || !projectId) return
     const tick = () => {
       if (document.visibilityState !== 'visible') return
       if (draggingRef.current) return
+      if (reorderBusyRef.current) {
+        deferredReloadRef.current = true
+        return
+      }
       if (pollBusyRef.current) return
       pollBusyRef.current = true
       void reload().finally(() => {
@@ -285,6 +316,7 @@ export function KanbanBoard({ projectId, user, openTaskId, onOpenTaskId }) {
   const applyReorder = async (nextTasks, statusChange) => {
     setTasks(nextTasks)
     const ordered = nextTasks.map((t) => ({ id: t.id, status: t.status, sortOrder: t.sortOrder }))
+    reorderBusyRef.current = true
     try {
       await reorderTasks(projectId, userId, ordered)
       if (
@@ -303,9 +335,13 @@ export function KanbanBoard({ projectId, user, openTaskId, onOpenTaskId }) {
           statusChange.to
         )
       }
+      deferredReloadRef.current = true
     } catch (e) {
       console.error(e)
-      void reload()
+      deferredReloadRef.current = true
+    } finally {
+      reorderBusyRef.current = false
+      flushDeferredReload()
     }
   }
 
@@ -317,20 +353,30 @@ export function KanbanBoard({ projectId, user, openTaskId, onOpenTaskId }) {
   const handleDragCancel = () => {
     draggingRef.current = false
     setActiveId(null)
+    flushDeferredReload()
   }
 
   const handleDragEnd = (event) => {
     const { active, over } = event
     draggingRef.current = false
     setActiveId(null)
-    if (!over) return
+    if (!over) {
+      flushDeferredReload()
+      return
+    }
 
     const aId = String(active.id)
     const oId = String(over.id)
-    if (aId === oId) return
+    if (aId === oId) {
+      flushDeferredReload()
+      return
+    }
 
     const activeTaskRow = tasks.find((t) => t.id === aId)
-    if (!activeTaskRow) return
+    if (!activeTaskRow) {
+      flushDeferredReload()
+      return
+    }
 
     const containerOf = (id) => {
       if (STATUS_IDS.includes(id)) return id
@@ -339,7 +385,10 @@ export function KanbanBoard({ projectId, user, openTaskId, onOpenTaskId }) {
 
     const from = activeTaskRow.status
     const to = containerOf(oId)
-    if (!to) return
+    if (!to) {
+      flushDeferredReload()
+      return
+    }
 
     const base = tasks.filter((t) => t.id !== aId)
 
@@ -347,7 +396,10 @@ export function KanbanBoard({ projectId, user, openTaskId, onOpenTaskId }) {
       const col = tasks.filter((t) => t.status === from).sort((a, b) => a.sortOrder - b.sortOrder)
       const oldIndex = col.findIndex((t) => t.id === aId)
       const newIndex = col.findIndex((t) => t.id === oId)
-      if (oldIndex < 0 || newIndex < 0) return
+      if (oldIndex < 0 || newIndex < 0) {
+        flushDeferredReload()
+        return
+      }
       const reordered = arrayMove(col, oldIndex, newIndex).map((t, i) => ({ ...t, sortOrder: i }))
       const next = [...base.filter((t) => t.status !== from), ...reordered]
       void applyReorder(next)

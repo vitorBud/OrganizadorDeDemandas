@@ -284,6 +284,13 @@ function isMissingTableError(error) {
   )
 }
 
+function isMissingRpcError(error, fnName) {
+  if (!error) return false
+  const msg = String(error.message || '')
+  const code = error.code || ''
+  return code === 'PGRST202' || (msg.includes(fnName) && /function|schema cache|not find/i.test(msg))
+}
+
 export async function listMyNotifications(userId, limit = 40) {
   if (!isRemoteCollab() || !supabase) return []
   const { data, error } = await supabase
@@ -540,6 +547,18 @@ export async function reorderTasks(projectId, userId, ordered) {
   }
 
   const stamp = new Date().toISOString()
+  const { error: rpcError } = await supabase.rpc('reorder_project_tasks', {
+    p_project_id: projectId,
+    p_items: ordered.map((o) => ({
+      id: o.id,
+      status: o.status,
+      sortOrder: o.sortOrder,
+    })),
+  })
+
+  if (!rpcError) return
+  if (!isMissingRpcError(rpcError, 'reorder_project_tasks')) throw rpcError
+
   for (const o of ordered) {
     const { error } = await supabase
       .from('tasks')
