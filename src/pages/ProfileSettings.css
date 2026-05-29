@@ -1,5 +1,5 @@
 .profile-settings {
-  max-width: 560px;
+  max-width: 620px;
   margin: 0 auto;
   padding: 24px 16px 48px;
 }
@@ -37,6 +37,20 @@
   line-height: 1.45;
 }
 
+.profile-settings__section {
+  padding: 18px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  background: var(--panel-gradient);
+  box-shadow: var(--shadow);
+  margin-bottom: 16px;
+}
+
+.profile-settings__section-title {
+  margin: 0 0 14px;
+  font-size: 1rem;
+}
+
 .profile-settings__preview {
   display: flex;
   align-items: center;
@@ -45,8 +59,7 @@
   padding: 14px 16px;
   border-radius: var(--radius-lg);
   border: 1px solid var(--border);
-  background: var(--panel-gradient);
-  box-shadow: var(--shadow);
+  background: color-mix(in srgb, var(--bg) 74%, transparent);
 }
 
 .profile-settings__preview-dot {
@@ -107,6 +120,66 @@
   border-radius: var(--radius-sm);
   cursor: pointer;
   background: color-mix(in srgb, var(--bg) 84%, transparent);
+}
+
+.profile-settings__password-label {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: var(--text-h);
+  margin-bottom: 14px;
+}
+
+.profile-settings__password-field {
+  position: relative;
+  display: block;
+}
+
+.profile-settings__password-input {
+  width: 100%;
+  min-height: 42px;
+  font: inherit;
+  padding: 10px 12px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: color-mix(in srgb, var(--bg) 84%, transparent);
+  color: var(--text-h);
+}
+
+.profile-settings__password-field .profile-settings__password-input {
+  padding-right: 46px;
+}
+
+.profile-settings__password-input:focus {
+  outline: none;
+  border-color: var(--accent-border);
+  background: color-mix(in srgb, var(--bg) 96%, transparent);
+  box-shadow: 0 0 0 3px var(--accent-bg);
+}
+
+.profile-settings__password-toggle {
+  position: absolute;
+  right: 7px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 34px;
+  height: 34px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid transparent;
+  border-radius: var(--radius-sm);
+  background: transparent;
+  color: var(--text-muted);
+  cursor: pointer;
+}
+
+.profile-settings__password-toggle:hover {
+  border-color: var(--accent-border);
+  color: var(--accent-hot);
+  background: var(--accent-bg);
 }
 
 .profile-settings__actions {

@@ -75,7 +75,7 @@ export function AppShell() {
   return (
     <div className="app-shell">
       <header className="app-shell__header">
-        <Link to="/app" className="app-shell__brand">
+        <Link to="/" className="app-shell__brand">
           OrgDemandas
         </Link>
         <nav className="app-shell__nav" aria-label="Principal">
@@ -102,7 +102,7 @@ export function AppShell() {
               `app-shell__nav-link${isActive ? ' app-shell__nav-link--active' : ''}`
             }
           >
-            A tua cor
+            Configurações
           </NavLink>
         </nav>
         <div className="app-shell__actions">

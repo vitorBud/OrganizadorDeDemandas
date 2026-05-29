@@ -255,6 +255,30 @@ export function AuthProvider({ children }) {
     [remote, userId]
   )
 
+  const updatePassword = useCallback(
+    async (password) => {
+      if (!userId) return { ok: false, error: 'Sem sessão.' }
+      const nextPassword = String(password ?? '')
+      if (nextPassword.length < 6) {
+        return { ok: false, error: 'Use uma senha com pelo menos 6 caracteres.' }
+      }
+
+      if (remote && supabase) {
+        const { error } = await supabase.auth.updateUser({ password: nextPassword })
+        if (error) return { ok: false, error: error.message || 'Não foi possível alterar a senha.' }
+        return { ok: true }
+      }
+
+      const users = getUsers()
+      const i = users.findIndex((u) => u.id === userId)
+      if (i === -1) return { ok: false, error: 'Utilizador não encontrado.' }
+      users[i] = { ...users[i], password: nextPassword }
+      saveUsers(users)
+      return { ok: true }
+    },
+    [remote, userId]
+  )
+
   const value = useMemo(
     () => ({
       user,
@@ -263,6 +287,7 @@ export function AuthProvider({ children }) {
       register,
       logout,
       updateAccentColor,
+      updatePassword,
       profilesRemoteTick,
       isAuthenticated: remote ? !!remoteUser : !!user,
       authReady,
@@ -275,6 +300,7 @@ export function AuthProvider({ children }) {
       register,
       logout,
       updateAccentColor,
+      updatePassword,
       profilesRemoteTick,
       remote,
       remoteUser,
