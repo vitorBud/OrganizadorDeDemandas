@@ -76,6 +76,46 @@
   font-size: 1.08rem;
 }
 
+.profile-settings__theme-preview {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 20px;
+  padding: 14px 16px;
+  border-radius: var(--radius-lg);
+  border: 1px solid var(--border);
+  background:
+    linear-gradient(90deg, color-mix(in srgb, var(--accent-bg) 62%, transparent), transparent),
+    color-mix(in srgb, var(--bg) 74%, transparent);
+}
+
+.profile-settings__theme-preview div {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.profile-settings__theme-preview strong {
+  font-size: 1rem;
+  line-height: 1.2;
+}
+
+.profile-settings__theme-preview span {
+  font-size: 0.88rem;
+  color: var(--text-muted);
+  font-weight: 700;
+}
+
+.profile-settings__theme-glow {
+  width: 42px;
+  height: 42px;
+  display: inline-block;
+  flex-shrink: 0;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--border);
+}
+
 .profile-settings__presets {
   display: flex;
   flex-wrap: wrap;

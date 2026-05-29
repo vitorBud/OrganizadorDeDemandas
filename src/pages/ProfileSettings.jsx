@@ -2,14 +2,24 @@ import { useCallback, useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { Eye, EyeOff } from 'lucide-react'
 import { useAuth } from '../context/AuthContext'
+import { useTheme } from '../context/ThemeContext'
+import { THEME_ACCENT_PRESETS } from '../lib/themeAccent'
 import { ACCENT_PRESETS, accentColorForDisplay, normalizeAccentColor } from '../lib/userColor'
 import './ProfileSettings.css'
 
 export function ProfileSettings() {
   const { user, updateAccentColor, updatePassword, authReady } = useAuth()
+  const {
+    accentColor: themeAccentColor,
+    setAccentColor: setThemeAccentColor,
+    resetAccentColor,
+    defaultAccentColor,
+  } = useTheme()
   const [hex, setHex] = useState('#2563eb')
+  const [themeHex, setThemeHex] = useState(defaultAccentColor)
   const [saving, setSaving] = useState(false)
   const [message, setMessage] = useState('')
+  const [themeMessage, setThemeMessage] = useState('')
   const [password, setPassword] = useState('')
   const [passwordConfirm, setPasswordConfirm] = useState('')
   const [showPassword, setShowPassword] = useState(false)
@@ -21,7 +31,12 @@ export function ProfileSettings() {
     setHex(n || '#2563eb')
   }, [user?.accentColor])
 
+  useEffect(() => {
+    setThemeHex(themeAccentColor || defaultAccentColor)
+  }, [themeAccentColor, defaultAccentColor])
+
   const preview = accentColorForDisplay(normalizeAccentColor(hex), user?.id)
+  const themePreview = normalizeAccentColor(themeHex) || defaultAccentColor
 
   const onSave = useCallback(async () => {
     setMessage('')
@@ -54,6 +69,23 @@ export function ProfileSettings() {
       setSaving(false)
     }
   }, [updateAccentColor])
+
+  const onThemeSave = useCallback(() => {
+    setThemeMessage('')
+    const normalized = normalizeAccentColor(themeHex)
+    if (!normalized) {
+      setThemeMessage('Escolha uma cor válida (#RRGGBB).')
+      return
+    }
+    const ok = setThemeAccentColor(normalized)
+    setThemeMessage(ok ? 'Tema aplicado.' : 'Não foi possível aplicar esta cor.')
+  }, [setThemeAccentColor, themeHex])
+
+  const onThemeReset = useCallback(() => {
+    resetAccentColor()
+    setThemeHex(defaultAccentColor)
+    setThemeMessage('Tema original laranja ativado.')
+  }, [defaultAccentColor, resetAccentColor])
 
   const onPasswordSave = useCallback(async () => {
     setPasswordMessage('')
@@ -95,11 +127,11 @@ export function ProfileSettings() {
       </Link>
       <h1 className="profile-settings__title">Configurações</h1>
       <p className="profile-settings__lead">
-        Ajuste sua identificação visual e os dados de acesso da conta.
+        Ajuste sua identificação visual, o tema da interface e os dados de acesso da conta.
       </p>
 
       <section className="profile-settings__section">
-        <h2 className="profile-settings__section-title">Selecionar cor</h2>
+        <h2 className="profile-settings__section-title">Cor do perfil</h2>
         <div className="profile-settings__preview">
           <span
             className="profile-settings__preview-dot"
@@ -145,6 +177,56 @@ export function ProfileSettings() {
         </div>
 
         {message ? <p className="profile-settings__msg">{message}</p> : null}
+      </section>
+
+      <section className="profile-settings__section">
+        <h2 className="profile-settings__section-title">Tema do site</h2>
+        <div className="profile-settings__theme-preview">
+          <span
+            className="profile-settings__theme-glow"
+            style={{ background: themePreview, boxShadow: `0 0 22px ${themePreview}66` }}
+            aria-hidden
+          />
+          <div>
+            <strong style={{ color: themePreview }}>Cor principal</strong>
+            <span>{themePreview}</span>
+          </div>
+        </div>
+
+        <div className="profile-settings__presets" role="group" aria-label="Temas sugeridos">
+          {THEME_ACCENT_PRESETS.map((c) => (
+            <button
+              key={c}
+              type="button"
+              className={`profile-settings__swatch${normalizeAccentColor(themeHex) === c ? ' profile-settings__swatch--active' : ''}`}
+              style={{ background: c }}
+              title={c}
+              aria-label={`Tema ${c}`}
+              onClick={() => setThemeHex(c)}
+            />
+          ))}
+        </div>
+
+        <label className="profile-settings__picker-label">
+          Cor principal personalizada
+          <input
+            type="color"
+            value={themePreview}
+            onChange={(e) => setThemeHex(e.target.value)}
+            className="profile-settings__picker"
+          />
+        </label>
+
+        <div className="profile-settings__actions">
+          <button type="button" className="btn btn--primary btn--sm" onClick={onThemeSave}>
+            Aplicar tema
+          </button>
+          <button type="button" className="btn btn--ghost btn--sm" onClick={onThemeReset}>
+            Voltar ao laranja
+          </button>
+        </div>
+
+        {themeMessage ? <p className="profile-settings__msg">{themeMessage}</p> : null}
       </section>
 
       <section className="profile-settings__section">

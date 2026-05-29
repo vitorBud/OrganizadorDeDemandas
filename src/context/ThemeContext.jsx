@@ -1,4 +1,11 @@
 import { createContext, useContext, useEffect, useLayoutEffect, useMemo, useState } from 'react'
+import {
+  DEFAULT_THEME_ACCENT,
+  THEME_ACCENT_STORAGE_KEY,
+  applyThemeAccent,
+  readStoredThemeAccent,
+} from '../lib/themeAccent'
+import { normalizeAccentColor } from '../lib/userColor'
 
 const STORAGE_KEY = 'orgdemandas_theme'
 
@@ -18,12 +25,34 @@ function systemIsDark() {
 
 export function ThemeProvider({ children }) {
   const [preference, setPreferenceState] = useState(readPreference)
+  const [accentColor, setAccentColorState] = useState(readStoredThemeAccent)
   const [systemDark, setSystemDark] = useState(() => systemIsDark())
 
   const setPreference = (value) => {
     setPreferenceState(value)
     try {
       localStorage.setItem(STORAGE_KEY, value)
+    } catch {
+      /* ignore */
+    }
+  }
+
+  const setAccentColor = (value) => {
+    const normalized = normalizeAccentColor(value)
+    if (!normalized) return false
+    setAccentColorState(normalized)
+    try {
+      localStorage.setItem(THEME_ACCENT_STORAGE_KEY, normalized)
+    } catch {
+      /* ignore */
+    }
+    return true
+  }
+
+  const resetAccentColor = () => {
+    setAccentColorState(DEFAULT_THEME_ACCENT)
+    try {
+      localStorage.removeItem(THEME_ACCENT_STORAGE_KEY)
     } catch {
       /* ignore */
     }
@@ -36,7 +65,8 @@ export function ThemeProvider({ children }) {
 
   useLayoutEffect(() => {
     document.documentElement.setAttribute('data-theme', effective)
-  }, [effective])
+    applyThemeAccent(accentColor, effective)
+  }, [effective, accentColor])
 
   useEffect(() => {
     const mq = window.matchMedia('(prefers-color-scheme: dark)')
@@ -50,8 +80,12 @@ export function ThemeProvider({ children }) {
       preference,
       setPreference,
       effective,
+      accentColor,
+      setAccentColor,
+      resetAccentColor,
+      defaultAccentColor: DEFAULT_THEME_ACCENT,
     }),
-    [preference, effective]
+    [preference, effective, accentColor]
   )
 
   return <ThemeContext.Provider value={value}>{children}</ThemeContext.Provider>

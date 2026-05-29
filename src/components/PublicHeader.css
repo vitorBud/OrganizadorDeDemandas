@@ -33,7 +33,7 @@
   height: 12px;
   border-radius: 999px;
   background: var(--accent);
-  box-shadow: 0 0 12px rgba(255, 140, 0, 0.7);
+  box-shadow: 0 0 12px rgba(var(--accent-rgb), 0.7);
 }
 
 .public-header__brand:hover {

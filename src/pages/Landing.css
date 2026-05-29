@@ -27,19 +27,19 @@
   border: 1px solid var(--border);
   border-radius: var(--radius-lg);
   background:
-    linear-gradient(90deg, rgba(255, 140, 0, 0.46) 0 2px, transparent 2px 100%),
+    linear-gradient(90deg, rgba(var(--accent-rgb), 0.46) 0 2px, transparent 2px 100%),
     repeating-linear-gradient(90deg, rgba(255, 255, 255, 0.08) 0 1px, transparent 1px 56px),
     repeating-linear-gradient(0deg, rgba(255, 255, 255, 0.06) 0 1px, transparent 1px 44px),
-    linear-gradient(135deg, rgba(255, 140, 0, 0.14), rgba(0, 212, 255, 0.08) 54%, rgba(255, 255, 255, 0.04));
+    linear-gradient(135deg, rgba(var(--accent-rgb), 0.14), rgba(0, 212, 255, 0.08) 54%, rgba(255, 255, 255, 0.04));
   box-shadow: var(--shadow-lift);
 }
 
 :root[data-theme='light'] .landing__hero::after {
   background:
-    linear-gradient(90deg, rgba(233, 113, 0, 0.6) 0 2px, transparent 2px 100%),
+    linear-gradient(90deg, rgba(var(--accent-rgb), 0.6) 0 2px, transparent 2px 100%),
     repeating-linear-gradient(90deg, rgba(17, 24, 39, 0.09) 0 1px, transparent 1px 56px),
     repeating-linear-gradient(0deg, rgba(17, 24, 39, 0.07) 0 1px, transparent 1px 44px),
-    linear-gradient(135deg, rgba(233, 113, 0, 0.16), rgba(0, 121, 145, 0.1) 54%, rgba(255, 255, 255, 0.74));
+    linear-gradient(135deg, rgba(var(--accent-rgb), 0.16), rgba(0, 121, 145, 0.1) 54%, rgba(255, 255, 255, 0.74));
 }
 
 .landing__badge {
@@ -134,5 +134,5 @@
   height: 8px;
   border-radius: 50%;
   background: var(--accent);
-  box-shadow: 0 0 10px rgba(255, 140, 0, 0.72);
+  box-shadow: 0 0 10px rgba(var(--accent-rgb), 0.72);
 }
