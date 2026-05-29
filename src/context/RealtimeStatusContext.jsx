@@ -4,11 +4,13 @@ import { isRemoteCollab } from '../lib/collabApi'
 
 const RealtimeStatusContext = createContext(null)
 
+/** Estado de rede do navegador; usado para diferenciar offline real de erro do Supabase. */
 function browserOnline() {
   if (typeof navigator === 'undefined') return true
   return navigator.onLine !== false
 }
 
+/** Converte o estado técnico do canal em texto curto para a interface. */
 function statusText(state) {
   if (state === 'connected') return 'Conectado'
   if (state === 'connecting') return 'Conectando'
@@ -18,6 +20,7 @@ function statusText(state) {
   return 'Modo local'
 }
 
+/** Cria um retrato imutável do status atual da conexão. */
 function nextSnapshot(state, detail, remote) {
   const now = Date.now()
   return {
@@ -31,6 +34,10 @@ function nextSnapshot(state, detail, remote) {
   }
 }
 
+/**
+ * Abre um canal Realtime leve só para descobrir se a conexão está saudável.
+ * Esse provider não carrega dados do app; ele apenas informa conectado/reconectando/offline.
+ */
 export function RealtimeStatusProvider({ children }) {
   const [snapshot, setSnapshot] = useState(() =>
     nextSnapshot(
@@ -65,6 +72,7 @@ export function RealtimeStatusProvider({ children }) {
         setStatus('offline', 'Navegador sem conexão com a internet.')
         return
       }
+      // O nome aleatório evita reutilizar estado interno de canais antigos.
       setStatus(state, state === 'connecting' ? 'Abrindo canal Realtime.' : 'Tentando reconectar ao Realtime.')
       channel = supabase
         .channel(`orgdemandas-status:${Math.random().toString(36).slice(2)}`)

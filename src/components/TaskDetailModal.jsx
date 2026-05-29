@@ -9,6 +9,7 @@ import {
 import { accentColorForDisplay } from '../lib/userColor'
 import './TaskDetailModal.css'
 
+/** Traduz códigos de histórico para rótulos legíveis na aba de atividade. */
 function actionLabel(action) {
   switch (action) {
     case 'task_created':
@@ -33,6 +34,7 @@ function actionLabel(action) {
 }
 
 /**
+ * Modal de edição completa da tarefa: dados principais, comentários, histórico e timer.
  * @param {object} props
  */
 export function TaskDetailModal({
@@ -61,6 +63,7 @@ export function TaskDetailModal({
   const pomAccumRef = useRef(task.meta?.pomodoroSeconds ?? 0)
 
   useEffect(() => {
+    // Quando troca a tarefa aberta, reseta o formulário local para os dados atuais.
     setTitle(task.title)
     setDescription(task.description || '')
     setStatus(task.status)
@@ -83,6 +86,7 @@ export function TaskDetailModal({
   )
 
   useEffect(() => {
+    // Trava o scroll da página enquanto o modal está aberto.
     const el = dialogRef.current
     if (!el) return
     const prev = document.body.style.overflow
@@ -93,6 +97,7 @@ export function TaskDetailModal({
   }, [])
 
   useEffect(() => {
+    // Atualiza o contador do timer em tempo real sem salvar a cada segundo.
     if (!pomodoroRunning || !pomStartRef.current) {
       setLiveSec(0)
       return
@@ -108,6 +113,7 @@ export function TaskDetailModal({
   }, [pomodoroRunning])
 
   async function persistPomodoro(seconds) {
+    // O tempo acumulado fica dentro de task.meta para evitar criar outra tabela/campo.
     const meta = { ...(task.meta || {}), pomodoroSeconds: seconds }
     try {
       await updateTask(projectId, userId, userName, task, { meta })
@@ -119,6 +125,7 @@ export function TaskDetailModal({
   }
 
   const handleSave = async () => {
+    // Monta um patch pequeno para updateTask registrar histórico só do que mudou.
     setSaving(true)
     try {
       const patch = {
@@ -163,6 +170,7 @@ export function TaskDetailModal({
   }
 
   const togglePomodoro = async () => {
+    // Iniciar guarda o timestamp; pausar acumula segundos e persiste.
     if (pomodoroRunning && pomStartRef.current) {
       const add = Math.floor((Date.now() - pomStartRef.current) / 1000)
       pomAccumRef.current += add
@@ -190,6 +198,7 @@ export function TaskDetailModal({
   }
 
   useEffect(() => {
+    // Atalho padrão de modal: Escape fecha.
     const onKey = (e) => {
       if (e.key === 'Escape') onClose()
     }

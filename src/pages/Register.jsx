@@ -5,6 +5,7 @@ import { PublicHeader } from '../components/PublicHeader'
 import { useAuth } from '../context/AuthContext'
 import './AuthForm.css'
 
+/** Formulário de cadastro com suporte a confirmação de e-mail no modo Supabase. */
 export function Register() {
   const { register, isAuthenticated } = useAuth()
   const navigate = useNavigate()
@@ -23,6 +24,7 @@ export function Register() {
   if (isAuthenticated) return null
 
   async function handleSubmit(e) {
+    // Validação mínima no cliente antes de chamar AuthContext.register().
     e.preventDefault()
     setError('')
     setInfo('')

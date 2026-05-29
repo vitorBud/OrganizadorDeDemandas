@@ -15,6 +15,8 @@ import './ProjectPosts.css'
 const EMPTY_DRAFT = { title: '', body: '' }
 
 /**
+ * Mural de postagens do projeto.
+ * Recebe os blocos do ProjectBoard, transforma em posts e devolve a lista atualizada para persistir.
  * @param {object} props
  */
 export function ProjectPosts({
@@ -38,6 +40,7 @@ export function ProjectPosts({
   const isLeader = ownerId === userId
 
   useEffect(() => {
+    // Enquanto alguém edita, o ProjectBoard pausa reloads de blocks para não apagar o rascunho.
     onEditingChange?.(composing || !!editingId)
   }, [composing, editingId, onEditingChange])
 
@@ -46,6 +49,7 @@ export function ProjectPosts({
   const postBlocksOnly = () => (blocks ?? []).filter((b) => isPostBlock(b))
 
   async function applyPostBlocks(nextPostBlocks) {
+    // Atualização otimista: mostra imediatamente e desfaz se o Supabase recusar.
     const previousBlocks = blocks ?? []
     const merged = mergePostsIntoBlocks(blocks, nextPostBlocks)
     onBlocksChange(merged)
@@ -58,6 +62,7 @@ export function ProjectPosts({
   }
 
   function canModifyPost(post) {
+    // O autor ou o líder pode editar/excluir; posts legados ficam somente leitura.
     if (post.legacy) return false
     return post.authorId === userId || isLeader
   }
@@ -85,6 +90,7 @@ export function ProjectPosts({
   }
 
   async function handleSubmit(e) {
+    // Mesmo formulário cria e edita; editingId decide o caminho.
     e.preventDefault()
     setError('')
     const title = draft.title.trim()
@@ -126,6 +132,7 @@ export function ProjectPosts({
   }
 
   async function handleDelete(post) {
+    // Remove só o post selecionado e preserva outros blocos do projeto.
     if (!canModifyPost(post)) return
     if (!window.confirm(`Excluir a postagem "${post.title}"?`)) return
     setBusy(true)

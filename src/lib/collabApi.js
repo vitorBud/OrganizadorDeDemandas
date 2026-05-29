@@ -10,6 +10,11 @@ import {
   generateJoinCode,
 } from './storage'
 
+/**
+ * API de colaboração de alto nível.
+ * Cada função decide internamente entre localStorage e Supabase para o restante do app usar uma interface só.
+ */
+
 /** Verdadeiro só quando o cliente Supabase foi criado (URL + anon key no build). */
 export function isRemoteCollab() {
   return !!supabase
@@ -20,6 +25,7 @@ export function newRemoteId() {
   return crypto.randomUUID()
 }
 
+/** Traduz a linha do banco para o formato camelCase usado pelos componentes React. */
 function mapProjectRow(p) {
   if (!p) return null
   return {
@@ -31,6 +37,7 @@ function mapProjectRow(p) {
   }
 }
 
+/** Reconstrói um bloco do projeto a partir das colunas blocks + meta jsonb. */
 function mapBlockRow(row) {
   const meta = row.meta && typeof row.meta === 'object' ? row.meta : {}
   return {
@@ -49,6 +56,7 @@ function mapBlockRow(row) {
   }
 }
 
+/** Prepara um bloco do app para ser salvo na tabela blocks. */
 function blockToDb(projectId, block, sortOrder) {
   const isPost = block.type === POST_BLOCK_TYPE || block.kind === POST_BLOCK_KIND
   return {
@@ -71,7 +79,10 @@ function blockToDb(projectId, block, sortOrder) {
   }
 }
 
-/** @param {string} userId */
+/**
+ * Lista salas/projetos onde o usuário é membro.
+ * @param {string} userId
+ */
 export async function listProjects(userId) {
   if (!isRemoteCollab()) {
     return getProjects().filter((p) => p.memberIds?.includes(userId))
@@ -98,6 +109,7 @@ export async function listProjects(userId) {
 }
 
 /**
+ * Cria uma sala nova e já adiciona o usuário como membro.
  * @param {string} userId
  * @param {string} name
  */
@@ -177,6 +189,7 @@ export async function createProjectRemote(userId, name) {
 }
 
 /**
+ * Entra em uma sala existente usando o código compartilhável.
  * @param {string} userId
  * @param {string} code
  */
@@ -229,6 +242,7 @@ export async function joinProjectByCode(userId, code) {
 }
 
 /**
+ * Permite que um membro saia da sala sem apagar o projeto.
  * @param {string} projectId
  * @param {string} userId
  */
@@ -260,6 +274,7 @@ export async function leaveProject(projectId, userId) {
 }
 
 /**
+ * Exclui o projeto inteiro; no remoto a regra do banco limita isso ao líder.
  * @param {string} projectId
  * @param {string} userId
  */
@@ -279,6 +294,7 @@ export async function deleteProject(projectId, userId) {
 }
 
 /**
+ * Remove outro membro do grupo e limpa atribuições locais desse usuário.
  * @param {string} projectId
  * @param {string} actorUserId
  * @param {string} targetUserId
@@ -319,6 +335,8 @@ export async function removeProjectMember(projectId, actorUserId, targetUserId) 
 }
 
 /**
+ * Carrega o projeto somente se o usuário logado for membro.
+ * Essa é a principal "porta de entrada" da tela ProjectBoard.
  * @param {string} projectId
  * @param {string} userId
  */
@@ -396,6 +414,7 @@ export async function getProjectIfMember(projectId, userId) {
 }
 
 /**
+ * Persiste partes mutáveis do projeto, hoje principalmente mural/blocos.
  * @param {string} projectId
  * @param {{ blocks?: object[], messages?: object[] }} payload
  */
@@ -414,7 +433,7 @@ export async function persistProjectState(projectId, { blocks, messages }) {
 
   if (blocks === undefined) return
 
-  // Remote: blocks are row-per-block; messages appended separately in sendMessageRemote
+  // No remoto, blocos ficam um por linha; mensagens entram por sendMessageRemote.
   const rows = blocks.map((b, o) => blockToDb(projectId, b, o))
   if (rows.length === 0) {
     const { error: emptyErr } = await supabase.from('blocks').delete().eq('project_id', projectId)
@@ -435,10 +454,8 @@ export async function persistProjectState(projectId, { blocks, messages }) {
 }
 
 /**
- * @param {string} projectId
- * @param {object} msg { id, userId, userName, text, createdAt }
- */
-/**
+ * Envia mensagem de chat.
+ * No modo remoto tenta salvar nome/cor do remetente, mas cai para o formato antigo se a migração não existir.
  * @param {string} projectId
  * @param {{ userId: string, userName: string, text: string, accentColor?: string | null }} msg
  */
@@ -485,6 +502,7 @@ export async function sendMessageRemote(projectId, msg) {
 }
 
 /**
+ * Assina mudanças do projeto para atualizar mural, chat e dados gerais em tempo real.
  * @param {string} projectId
  * @param {(payload: { blocks?: boolean, messages?: boolean, project?: boolean }) => void} onChange
  */

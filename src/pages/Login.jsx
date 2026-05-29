@@ -5,6 +5,7 @@ import { PublicHeader } from '../components/PublicHeader'
 import { useAuth } from '../context/AuthContext'
 import './AuthForm.css'
 
+/** Formulário de entrada; redireciona de volta para a rota protegida que o usuário tentou abrir. */
 export function Login() {
   const { login, isAuthenticated } = useAuth()
   const navigate = useNavigate()
@@ -23,6 +24,7 @@ export function Login() {
   if (isAuthenticated) return null
 
   async function handleSubmit(e) {
+    // AuthContext decide se o login será local ou pelo Supabase.
     e.preventDefault()
     setError('')
     const result = await login(email, password)

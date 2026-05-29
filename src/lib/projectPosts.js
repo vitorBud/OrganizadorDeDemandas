@@ -3,6 +3,8 @@ export const POST_BLOCK_DB_TYPE = 'text'
 export const POST_BLOCK_KIND = 'post'
 
 /**
+ * Identifica blocos que pertencem ao mural.
+ * No banco eles podem ser salvos como type="text" para respeitar constraints antigas.
  * @param {object} block
  */
 export function isPostBlock(block) {
@@ -14,6 +16,7 @@ export function isPostBlock(block) {
 }
 
 /**
+ * Normaliza formatos antigos/novos para uma estrutura única que o componente entende.
  * @param {object} block
  */
 export function normalizePostBlock(block) {
@@ -48,6 +51,7 @@ export function normalizePostBlock(block) {
 }
 
 /**
+ * Separa posts reais e ordena do mais recente para o mais antigo.
  * @param {object[]} blocks
  */
 export function postsFromBlocks(blocks) {
@@ -58,6 +62,7 @@ export function postsFromBlocks(blocks) {
 }
 
 /**
+ * Preserva blocos que não são do mural quando salvamos uma lista nova de posts.
  * @param {object[]} blocks
  */
 export function nonPostBlocks(blocks) {
@@ -65,6 +70,7 @@ export function nonPostBlocks(blocks) {
 }
 
 /**
+ * Junta postagens atualizadas com outros blocos do projeto.
  * @param {object[]} allBlocks
  * @param {object[]} postBlocks
  */
@@ -73,6 +79,7 @@ export function mergePostsIntoBlocks(allBlocks, postBlocks) {
 }
 
 /**
+ * Cria uma postagem nova no formato aceito pelo app e pelo banco.
  * @param {object} params
  */
 export function createPostBlock({ id, userId, userName, title, body }) {
@@ -91,6 +98,7 @@ export function createPostBlock({ id, userId, userName, title, body }) {
 }
 
 /**
+ * Aplica edição sem perder metadados como autor e data de criação.
  * @param {object} post
  * @param {{ title: string, body: string }} patch
  */

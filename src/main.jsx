@@ -4,6 +4,10 @@ import './index.css'
 import App from './App.jsx'
 import { applyThemeAccent, readStoredThemeAccent } from './lib/themeAccent'
 
+/**
+ * Aplica tema antes do React renderizar.
+ * Evita aquele "flash" rápido com a cor/tema padrão ao abrir a página.
+ */
 ;(function initThemeEarly() {
   try {
     const p = localStorage.getItem('orgdemandas_theme') || 'dark'

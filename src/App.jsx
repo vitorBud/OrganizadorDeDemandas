@@ -7,6 +7,10 @@ import { ProtectedRoute } from './components/ProtectedRoute'
 import { AppShell } from './components/AppShell'
 import './App.css'
 
+/**
+ * Carrega uma página somente quando a rota é acessada.
+ * Isso diminui o JavaScript inicial que o navegador precisa baixar.
+ */
 const lazyPage = (loader, name) => lazy(() => loader().then((mod) => ({ default: mod[name] })))
 
 const Landing = lazyPage(() => import('./pages/Landing'), 'Landing')
@@ -26,6 +30,10 @@ function RouteFallback() {
   )
 }
 
+/**
+ * Define a árvore principal da aplicação:
+ * provedores globais primeiro, depois rotas públicas e rotas protegidas.
+ */
 export default function App() {
   return (
     <BrowserRouter>

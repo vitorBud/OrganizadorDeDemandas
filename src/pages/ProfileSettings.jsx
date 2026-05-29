@@ -7,6 +7,9 @@ import { THEME_ACCENT_PRESETS } from '../lib/themeAccent'
 import { ACCENT_PRESETS, accentColorForDisplay, normalizeAccentColor } from '../lib/userColor'
 import './ProfileSettings.css'
 
+/**
+ * Tela de preferências do usuário: cor pessoal, cor principal do site e senha.
+ */
 export function ProfileSettings() {
   const { user, updateAccentColor, updatePassword, authReady } = useAuth()
   const {
@@ -27,11 +30,13 @@ export function ProfileSettings() {
   const [passwordMessage, setPasswordMessage] = useState('')
 
   useEffect(() => {
+    // Sincroniza o formulário com a cor atual do perfil.
     const n = normalizeAccentColor(user?.accentColor)
     setHex(n || '#2563eb')
   }, [user?.accentColor])
 
   useEffect(() => {
+    // Sincroniza o picker de tema com a cor global aplicada.
     setThemeHex(themeAccentColor || defaultAccentColor)
   }, [themeAccentColor, defaultAccentColor])
 
@@ -39,6 +44,7 @@ export function ProfileSettings() {
   const themePreview = normalizeAccentColor(themeHex) || defaultAccentColor
 
   const onSave = useCallback(async () => {
+    // Salva a cor do usuário, usada para identificação em chat, comentários e cards.
     setMessage('')
     const normalized = normalizeAccentColor(hex)
     if (!normalized) {
@@ -71,6 +77,7 @@ export function ProfileSettings() {
   }, [updateAccentColor])
 
   const onThemeSave = useCallback(() => {
+    // Aplica a cor principal do site no ThemeContext.
     setThemeMessage('')
     const normalized = normalizeAccentColor(themeHex)
     if (!normalized) {
@@ -88,6 +95,7 @@ export function ProfileSettings() {
   }, [defaultAccentColor, resetAccentColor])
 
   const onPasswordSave = useCallback(async () => {
+    // Valida no cliente antes de pedir alteração de senha ao AuthContext.
     setPasswordMessage('')
     if (password.length < 6) {
       setPasswordMessage('Use uma senha com pelo menos 6 caracteres.')

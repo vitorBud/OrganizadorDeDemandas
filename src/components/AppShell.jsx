@@ -8,6 +8,9 @@ import { listMyNotifications, markNotificationsRead, subscribeNotificationChanne
 import { accentColorForDisplay } from '../lib/userColor'
 import './AppShell.css'
 
+/**
+ * Layout principal da área logada: header, navegação, status, notificações e conteúdo das rotas filhas.
+ */
 export function AppShell() {
   const { user, userId, logout } = useAuth()
   const { preference, setPreference, effective } = useTheme()
@@ -22,6 +25,7 @@ export function AppShell() {
   const wideLayout = location.pathname.includes('/projeto/')
 
   const refreshNotifs = useCallback(async () => {
+    // Notificações só existem no modo Supabase.
     if (!remote || !userId) return
     try {
       const list = await listMyNotifications(userId)
@@ -32,6 +36,7 @@ export function AppShell() {
   }, [remote, userId])
 
   useEffect(() => {
+    // Primeira carga das notificações depois que o shell monta.
     queueMicrotask(() => {
       void refreshNotifs()
     })
@@ -39,6 +44,7 @@ export function AppShell() {
 
   useEffect(() => {
     if (!remote || !userId) return
+    // Mantém o menu de notificações atualizado quando o banco emite mudança.
     return subscribeNotificationChannel(userId, () => {
       void refreshNotifs()
     })
@@ -46,6 +52,7 @@ export function AppShell() {
 
   useEffect(() => {
     if (!notifOpen) return
+    // Fecha o painel ao clicar fora dele.
     const onDoc = (e) => {
       if (notifRef.current && !notifRef.current.contains(e.target)) setNotifOpen(false)
     }
@@ -61,6 +68,7 @@ export function AppShell() {
   const unread = notifs.filter((n) => !n.readAt).length
 
   async function toggleNotifs() {
+    // Ao abrir, marca as notificações não lidas como lidas.
     const willOpen = !notifOpen
     setNotifOpen(willOpen)
     if (!willOpen || !userId) return

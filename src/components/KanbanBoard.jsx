@@ -36,16 +36,19 @@ import './KanbanBoard.css'
 
 const STATUS_IDS = TASK_STATUSES.map((s) => s.id)
 
+/** Metadados visuais da prioridade, com fallback para média. */
 function priorityMeta(id) {
   return PRIORITIES.find((p) => p.id === id) ?? PRIORITIES[1]
 }
 
+/** Cor fixa da borda lateral que permite escanear prioridade rapidamente. */
 function priorityBorderColor(id) {
   if (id === 'high') return '#ef4444'
   if (id === 'low') return '#22c55e'
   return '#eab308'
 }
 
+/** Card arrastável de uma tarefa. O dnd-kit injeta refs/listeners para o drag funcionar. */
 function SortableTaskCard({ task, members, commentCount, onOpen }) {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
     id: task.id,
@@ -150,6 +153,7 @@ function SortableTaskCard({ task, members, commentCount, onOpen }) {
   )
 }
 
+/** Coluna do Kanban e também área de destino para soltar cards. */
 function KanbanColumn({ statusId, label, count, children }) {
   const { setNodeRef, isOver } = useDroppable({ id: statusId })
   return (
@@ -168,6 +172,8 @@ function KanbanColumn({ statusId, label, count, children }) {
 }
 
 /**
+ * Quadro Kanban do projeto.
+ * Controla filtros, criação rápida, drag-and-drop e sincronização com outras pessoas.
  * @param {object} props
  * @param {string} props.projectId
  * @param {{ id: string, name: string, accentColor?: string | null }} props.user
@@ -202,6 +208,7 @@ export function KanbanBoard({ projectId, user, openTaskId, onOpenTaskId }) {
   )
 
   const reload = useCallback(async () => {
+    // Carrega tarefas, comentários, histórico e membros em uma rodada.
     if (!projectId || !userId) return
     try {
       const bundle = await loadKanbanBundle(projectId, userId)
@@ -213,6 +220,7 @@ export function KanbanBoard({ projectId, user, openTaskId, onOpenTaskId }) {
         memberError = e
       }
       if (draggingRef.current || reorderBusyRef.current) {
+        // Se chegar atualização remota durante o drag, espera terminar para evitar "voltar card".
         deferredReloadRef.current = true
         return
       }
@@ -235,6 +243,7 @@ export function KanbanBoard({ projectId, user, openTaskId, onOpenTaskId }) {
   }, [projectId, userId])
 
   const requestReload = useCallback(() => {
+    // Realtime chama isto; pode executar agora ou deixar pendente durante drag/reorder.
     if (draggingRef.current || reorderBusyRef.current) {
       deferredReloadRef.current = true
       return
@@ -243,6 +252,7 @@ export function KanbanBoard({ projectId, user, openTaskId, onOpenTaskId }) {
   }, [reload])
 
   const flushDeferredReload = useCallback(() => {
+    // Depois de salvar uma movimentação, aplica qualquer reload que ficou pendente.
     if (!deferredReloadRef.current || reorderBusyRef.current) return
     deferredReloadRef.current = false
     void reload()
@@ -262,6 +272,7 @@ export function KanbanBoard({ projectId, user, openTaskId, onOpenTaskId }) {
 
   useEffect(() => {
     if (!remote || !projectId) return
+    // Realtime avisa quando outra pessoa mexe no Kanban.
     return subscribeTaskChannels(projectId, () => {
       requestReload()
     })
@@ -277,6 +288,7 @@ export function KanbanBoard({ projectId, user, openTaskId, onOpenTaskId }) {
 
   useEffect(() => {
     if (!remote || !projectId) return
+    // Polling serve como rede de segurança caso algum evento Realtime atrase.
     const tick = () => {
       if (document.visibilityState !== 'visible') return
       if (draggingRef.current) return
@@ -302,6 +314,7 @@ export function KanbanBoard({ projectId, user, openTaskId, onOpenTaskId }) {
   }, [remote, projectId, reload])
 
   const grouped = useMemo(() => {
+    // Aplica filtros e monta as quatro colunas do Kanban.
     const g = { todo: [], in_progress: [], review: [], done: [] }
     const ft = filterText.trim().toLowerCase()
     for (const t of tasks) {
@@ -327,6 +340,7 @@ export function KanbanBoard({ projectId, user, openTaskId, onOpenTaskId }) {
   const activeTask = useMemo(() => tasks.find((t) => t.id === activeId), [tasks, activeId])
 
   const applyReorder = async (nextTasks, statusChange) => {
+    // Atualização otimista: primeiro move na tela, depois persiste no backend.
     setTasks(nextTasks)
     const ordered = nextTasks.map((t) => ({ id: t.id, status: t.status, sortOrder: t.sortOrder }))
     reorderBusyRef.current = true
@@ -370,6 +384,7 @@ export function KanbanBoard({ projectId, user, openTaskId, onOpenTaskId }) {
   }
 
   const handleDragEnd = (event) => {
+    // Calcula se foi reordenação na mesma coluna ou mudança entre colunas.
     const { active, over } = event
     draggingRef.current = false
     setActiveId(null)
@@ -438,6 +453,7 @@ export function KanbanBoard({ projectId, user, openTaskId, onOpenTaskId }) {
   }
 
   const handleCreate = async (e) => {
+    // Criação rápida sempre nasce em "A fazer"; detalhes ficam no modal.
     e.preventDefault()
     const t = newTitle.trim()
     if (!t) return

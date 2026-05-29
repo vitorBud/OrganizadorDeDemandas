@@ -2,6 +2,7 @@ import { Link } from 'react-router-dom'
 import { PublicHeader } from '../components/PublicHeader'
 import './Landing.css'
 
+/** Página pública de apresentação; não depende de sessão. */
 export function Landing() {
   return (
     <div className="landing">

@@ -1,6 +1,7 @@
 import { Link } from 'react-router-dom'
 import './PublicHeader.css'
 
+/** Header simples usado nas páginas públicas, antes do usuário entrar no app. */
 export function PublicHeader() {
   return (
     <header className="public-header">

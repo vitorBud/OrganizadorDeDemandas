@@ -18,6 +18,10 @@ import { KanbanBoard } from '../components/KanbanBoard'
 import { ProjectPosts } from '../components/ProjectPosts'
 import './ProjectBoard.css'
 
+/**
+ * Tela de um projeto aberto.
+ * Ela coordena Kanban, mural, chat, membros e sincronização Realtime da sala.
+ */
 export function ProjectBoard() {
   const { projectId } = useParams()
   const { user, userId, profilesRemoteTick } = useAuth()
@@ -39,6 +43,7 @@ export function ProjectBoard() {
 
   const setOpenTaskId = useCallback(
     (id) => {
+      // A tarefa aberta fica na URL para permitir compartilhar link direto.
       const next = new URLSearchParams(params)
       if (id) next.set('task', id)
       else next.delete('task')
@@ -50,10 +55,12 @@ export function ProjectBoard() {
   const displayTab = openTaskId ? 'demandas' : workspaceTab
 
   useEffect(() => {
+    // Ref mantém a versão atual do projeto disponível sem disparar render.
     projectRef.current = project
   }, [project])
 
   const reload = useCallback(async () => {
+    // Recarrega o projeto validando se o usuário ainda é membro.
     if (!projectId || !userId) return
     const p = await getProjectIfMember(projectId, userId)
     if (!p) {
@@ -64,6 +71,7 @@ export function ProjectBoard() {
   }, [projectId, userId, navigate])
 
   useEffect(() => {
+    // Carga inicial da sala.
     if (!projectId || !userId) {
       navigate('/app', { replace: true })
       return
@@ -85,6 +93,7 @@ export function ProjectBoard() {
 
   useEffect(() => {
     if (!remote || !projectId) return
+    // Realtime atualiza chat/mural/projeto, com cuidados para não sobrescrever edição em andamento.
     return subscribeProjectChannels(projectId, (payload) => {
       if (payload?.blocks && postsEditingRef.current && displayTab === 'mural') {
         return
@@ -100,6 +109,7 @@ export function ProjectBoard() {
 
   useEffect(() => {
     if (!remote || !projectId || !userId) return
+    // Polling de segurança quando Realtime atrasa ou o navegador volta a ficar visível.
     const tick = () => {
       if (document.visibilityState !== 'visible') return
       if (postsEditingRef.current && displayTab === 'mural') return
@@ -130,6 +140,7 @@ export function ProjectBoard() {
 
   useEffect(() => {
     if (!projectId || !userId) return
+    // Lista de membros alimenta filtros, gerenciamento do grupo e autores do mural.
     let alive = true
     ;(async () => {
       try {
@@ -146,6 +157,7 @@ export function ProjectBoard() {
 
   const persistBlocks = useCallback(
     async (blocks) => {
+      // Usado pelo mural para salvar a nova lista de blocos.
       if (!projectId) return
       try {
         lastWriteRef.current = Date.now()
@@ -159,10 +171,12 @@ export function ProjectBoard() {
   )
 
   const handlePostsEditingChange = useCallback((editing) => {
+    // Enquanto edita post, pausamos reloads de blocks para preservar o formulário.
     postsEditingRef.current = editing
   }, [])
 
   const sendChat = async (e) => {
+    // Chat é append-only: envia uma mensagem nova e recarrega a lista.
     e.preventDefault()
     const text = chatDraft.trim()
     if (!text || !user || !projectId) return
@@ -251,6 +265,7 @@ export function ProjectBoard() {
   const messagesListRef = useRef(null)
 
   const chatScrollSig = useMemo(() => {
+    // Assinatura muda somente quando chega nova mensagem; usada para rolar ao final.
     const arr = project?.messages ?? []
     if (!arr.length) return '0'
     const sorted = [...arr].sort((a, b) => a.createdAt - b.createdAt)

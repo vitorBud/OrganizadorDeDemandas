@@ -11,6 +11,7 @@ const STORAGE_KEY = 'orgdemandas_theme'
 
 const ThemeContext = createContext(null)
 
+/** Lê a preferência claro/escuro salva no navegador. */
 function readPreference() {
   try {
     return localStorage.getItem(STORAGE_KEY) || 'dark'
@@ -19,10 +20,15 @@ function readPreference() {
   }
 }
 
+/** Consulta o tema do sistema operacional quando o usuário escolhe "Sistema". */
 function systemIsDark() {
   return window.matchMedia('(prefers-color-scheme: dark)').matches
 }
 
+/**
+ * Guarda tema claro/escuro e a cor principal do site.
+ * A cor vira variáveis CSS globais, então os componentes acompanham automaticamente.
+ */
 export function ThemeProvider({ children }) {
   const [preference, setPreferenceState] = useState(readPreference)
   const [accentColor, setAccentColorState] = useState(readStoredThemeAccent)
@@ -38,6 +44,7 @@ export function ThemeProvider({ children }) {
   }
 
   const setAccentColor = (value) => {
+    // Retorna boolean para a tela de Configurações poder mostrar erro ou sucesso.
     const normalized = normalizeAccentColor(value)
     if (!normalized) return false
     setAccentColorState(normalized)
@@ -64,6 +71,7 @@ export function ThemeProvider({ children }) {
   }, [preference, systemDark])
 
   useLayoutEffect(() => {
+    // useLayoutEffect aplica antes da pintura final, reduzindo piscar visual.
     document.documentElement.setAttribute('data-theme', effective)
     applyThemeAccent(accentColor, effective)
   }, [effective, accentColor])

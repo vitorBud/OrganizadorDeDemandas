@@ -9,6 +9,7 @@ import {
 } from '../lib/collabApi'
 import './Workspace.css'
 
+/** Página inicial logada: lista projetos, cria uma sala e entra por código. */
 export function Workspace() {
   const { userId } = useAuth()
   const navigate = useNavigate()
@@ -20,6 +21,7 @@ export function Workspace() {
   const remote = isRemoteCollab()
 
   const refresh = useCallback(async () => {
+    // Recarrega a lista de projetos acessíveis ao usuário atual.
     if (!userId) return
     try {
       const list = await listProjects(userId)
@@ -48,6 +50,7 @@ export function Workspace() {
   )
 
   async function handleCreate(e) {
+    // Cria projeto e navega diretamente para a sala recém-criada.
     e.preventDefault()
     setError('')
     const name = newName.trim()
@@ -66,6 +69,7 @@ export function Workspace() {
   }
 
   async function handleJoin(e) {
+    // Usa o código compartilhado por outro membro para entrar em uma sala.
     e.preventDefault()
     setError('')
     const code = joinCode.trim().toUpperCase()

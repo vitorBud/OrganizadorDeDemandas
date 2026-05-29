@@ -31,6 +31,7 @@ export function normalizeAccentColor(input) {
 }
 
 function hslToRgb(h, s, l) {
+  // Conversão compacta usada para gerar uma cor automática estável a partir do id.
   const sat = s / 100
   const light = l / 100
   const a = sat * Math.min(light, 1 - light)

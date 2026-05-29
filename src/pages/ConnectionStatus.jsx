@@ -1,11 +1,13 @@
 import { useRealtimeStatus } from '../context/RealtimeStatusContext'
 import './ConnectionStatus.css'
 
+/** Formata timestamps internos do status para leitura humana. */
 function formatTime(value) {
   if (!value) return '—'
   return new Date(value).toLocaleString()
 }
 
+/** Tela de diagnóstico para entender se o Realtime/Supabase está conectado. */
 export function ConnectionStatus() {
   const status = useRealtimeStatus()
   const mode = status.remote ? 'Supabase online' : 'Local'

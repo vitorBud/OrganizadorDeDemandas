@@ -25,6 +25,9 @@ import './Dashboard.css'
 
 ChartJS.register(ArcElement, CategoryScale, LinearScale, BarElement, Title, Tooltip, Legend)
 
+/**
+ * Consolida tarefas de todos os projetos do usuário em métricas, gráficos e exportação.
+ */
 export function Dashboard() {
   const { userId } = useAuth()
   const { effective } = useTheme()
@@ -36,6 +39,7 @@ export function Dashboard() {
   const [selectedProjectIds, setSelectedProjectIds] = useState([])
 
   const refresh = useCallback(async () => {
+    // Busca projetos, carrega o Kanban de cada um e achata tudo em uma lista única.
     if (!userId) return
     setLoading(true)
     setError('')
@@ -52,6 +56,7 @@ export function Dashboard() {
         })
       )
       const names = {}
+      // Nomes dos membros são carregados separadamente para rotular responsáveis nos gráficos.
       await Promise.all(
         projectList.map(async (p) => {
           try {
@@ -100,6 +105,7 @@ export function Dashboard() {
     selectedProjectIds.length >= projects.length
 
   const filteredRows = useMemo(() => {
+    // Filtro por projetos visíveis no dashboard.
     if (showingAllProjects) return rows
     const set = new Set(selectedProjectIds)
     return rows.filter((r) => set.has(r.projectId))
@@ -107,6 +113,7 @@ export function Dashboard() {
 
   const tasks = useMemo(
     () =>
+      // Remove o array de activity de cada linha para deixar a lista de tarefas mais simples.
       filteredRows.map((row) => {
         const { projectName, projectId, activity: _activity, ...t } = row
         return { ...t, projectName, projectId }
@@ -134,6 +141,7 @@ export function Dashboard() {
   }
 
   function toggleProject(projectId) {
+    // Comportamento de seleção pensado para comparar um projeto ou voltar para todos.
     setSelectedProjectIds((prev) => {
       const all = allProjectIds
       const isAllSelected =
@@ -164,6 +172,7 @@ export function Dashboard() {
   )
 
   const chartColors = useMemo(() => {
+    // Chart.js não lê CSS sozinho, então copiamos as variáveis para opções do gráfico.
     const styles = getComputedStyle(document.documentElement)
     const read = (name, fallback) => styles.getPropertyValue(name).trim() || fallback
     return {
@@ -243,6 +252,7 @@ export function Dashboard() {
   }, [mergedActivity, tasks, today, insights.overdueCount])
 
   const exportCsv = () => {
+    // Gera arquivo CSV no browser sem depender de backend.
     const esc = (s) => {
       const x = String(s ?? '').replace(/"/g, '""')
       return /[;\n"]/.test(x) ? `"${x}"` : x

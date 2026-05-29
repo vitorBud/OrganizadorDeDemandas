@@ -15,6 +15,7 @@ export const THEME_ACCENT_PRESETS = [
   '#ca8a04',
 ]
 
+/** Converte #rrggbb para canais RGB numéricos. */
 function hexToRgb(hex) {
   const normalized = normalizeAccentColor(hex) || DEFAULT_THEME_ACCENT
   return {
@@ -28,6 +29,7 @@ function rgbToHex({ r, g, b }) {
   return `#${[r, g, b].map((v) => Math.round(v).toString(16).padStart(2, '0')).join('')}`
 }
 
+/** Mistura duas cores; usado para gerar hover, brilho e gradiente do botão principal. */
 function mixHex(hex, targetHex, targetWeight) {
   const a = hexToRgb(hex)
   const b = hexToRgb(targetHex)
@@ -39,6 +41,7 @@ function mixHex(hex, targetHex, targetWeight) {
   })
 }
 
+/** Calcula luminosidade percebida para decidir se o texto deve ser claro ou escuro. */
 function relativeLuminance(hex) {
   const { r, g, b } = hexToRgb(hex)
   const toLinear = (v) => {
@@ -57,6 +60,7 @@ function rgbString(hex) {
   return `${r}, ${g}, ${b}`
 }
 
+/** Lê a cor principal salva; se algo falhar, volta para o laranja original. */
 export function readStoredThemeAccent() {
   try {
     return normalizeAccentColor(localStorage.getItem(THEME_ACCENT_STORAGE_KEY)) || DEFAULT_THEME_ACCENT
@@ -65,6 +69,10 @@ export function readStoredThemeAccent() {
   }
 }
 
+/**
+ * Aplica a identidade visual escolhida criando variáveis CSS globais.
+ * Qualquer componente que usa var(--accent...) muda de cor sem precisar conhecer essa função.
+ */
 export function applyThemeAccent(input, mode = 'dark') {
   const accent = normalizeAccentColor(input) || DEFAULT_THEME_ACCENT
   const light = mode === 'light'

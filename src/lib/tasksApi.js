@@ -4,6 +4,11 @@ import { fetchProfilesDisplayMapByIds } from './profileRemote'
 import { normalizeAccentColor } from './userColor'
 import { getProjects, saveProjects, generateId, getUsers } from './storage'
 
+/**
+ * API de tarefas/Kanban.
+ * Assim como collabApi, ela esconde a diferença entre modo local e Supabase.
+ */
+
 export const TASK_STATUSES = [
   { id: 'todo', label: 'A fazer' },
   { id: 'in_progress', label: 'Em andamento' },
@@ -17,18 +22,21 @@ export const PRIORITIES = [
   { id: 'low', label: 'Baixa', emoji: '🟢' },
 ]
 
+/** Gera id adequado para o ambiente atual. */
 function newId(remote) {
   return remote && typeof crypto !== 'undefined' && crypto.randomUUID
     ? crypto.randomUUID()
     : generateId()
 }
 
+/** Localiza um projeto dentro do array salvo no navegador. */
 function findLocalProject(projectId) {
   const all = getProjects()
   const i = all.findIndex((p) => p.id === projectId)
   return { all, i, project: i === -1 ? null : all[i] }
 }
 
+/** Garante que projetos antigos tenham as coleções usadas pelo Kanban. */
 function ensureLocalKanban(project) {
   return {
     tasks: project.tasks ?? [],
@@ -38,6 +46,7 @@ function ensureLocalKanban(project) {
   }
 }
 
+/** Aplica uma alteração local no projeto e salva de volta no localStorage. */
 function saveLocalProjectPatch(projectId, patchFn) {
   const { all, i, project } = findLocalProject(projectId)
   if (i === -1 || !project) return null
@@ -47,6 +56,7 @@ function saveLocalProjectPatch(projectId, patchFn) {
   return all[i]
 }
 
+/** Converte uma linha da tabela tasks para o formato consumido pela UI. */
 function mapTaskRow(row) {
   if (!row) return null
   return {
@@ -66,11 +76,13 @@ function mapTaskRow(row) {
   }
 }
 
+/** Nome visível com fallback consistente para usuários sem perfil completo. */
 function resolveDisplayName(value, fallback = 'Usuário') {
   const trimmed = String(value ?? '').trim()
   return trimmed || fallback
 }
 
+/** Busca nomes em mensagens antigas quando profiles ainda não tem todos os dados. */
 async function fetchMemberNameHintsFromMessages(projectId, userIds) {
   const ids = [...new Set((userIds || []).filter(Boolean))]
   if (!ids.length || !isRemoteCollab() || !supabase) return {}
@@ -109,6 +121,7 @@ function mapCommentRow(row, displayMap) {
   }
 }
 
+/** Une atividade de tarefas com dados de exibição do autor. */
 function mapActivityRow(row, displayMap) {
   const meta = row.actor_id ? displayMap[row.actor_id] : null
   return {
@@ -124,6 +137,7 @@ function mapActivityRow(row, displayMap) {
   }
 }
 
+/** Formata notificação vinda do banco para o padrão camelCase. */
 function mapNotifRow(row) {
   return {
     id: row.id,
@@ -147,7 +161,11 @@ function localUserAccent(userId) {
   return normalizeAccentColor(u?.accentColor) ?? null
 }
 
-/** @param {string} projectId @param {string} userId */
+/**
+ * Verifica se o usuário pode acessar o projeto antes de ler/escrever tarefas.
+ * @param {string} projectId
+ * @param {string} userId
+ */
 export async function assertProjectMember(projectId, userId) {
   if (!isRemoteCollab()) {
     const { project } = findLocalProject(projectId)
@@ -165,6 +183,7 @@ export async function assertProjectMember(projectId, userId) {
 }
 
 /**
+ * Lista membros para filtros, responsáveis e permissões visuais.
  * @param {string} projectId
  * @param {string} userId
  */
@@ -208,6 +227,7 @@ export async function listProjectMembers(projectId, userId) {
 
 /**
  * Carrega tarefas, comentários e atividades do projeto.
+ * É o "bundle" principal que alimenta o Kanban.
  * @param {string} projectId
  * @param {string} userId
  */
@@ -270,9 +290,7 @@ export async function loadKanbanBundle(projectId, userId) {
   return { tasks, comments, activity }
 }
 
-/**
- * @param {string} userId
- */
+/** Reconhece quando a instalação ainda não tem tabelas opcionais do Kanban. */
 function isMissingTableError(error) {
   if (!error) return false
   const msg = String(error.message || '')
@@ -291,6 +309,7 @@ function isMissingRpcError(error, fnName) {
   return code === 'PGRST202' || (msg.includes(fnName) && /function|schema cache|not find/i.test(msg))
 }
 
+/** Busca notificações do usuário logado; tabela ausente não quebra o app. */
 export async function listMyNotifications(userId, limit = 40) {
   if (!isRemoteCollab() || !supabase) return []
   const { data, error } = await supabase
@@ -307,6 +326,7 @@ export async function listMyNotifications(userId, limit = 40) {
 }
 
 /**
+ * Marca notificações como lidas após o usuário abrir o menu.
  * @param {string} userId
  * @param {string[]} ids
  */
@@ -334,6 +354,7 @@ async function insertNotificationRemote({ userId, projectId, taskId, kind, title
   if (error) console.warn('notif insert', error)
 }
 
+/** Escreve histórico da tarefa no Supabase. */
 async function logActivityRemote(projectId, taskId, actorId, action, detail) {
   if (!isRemoteCollab() || !supabase) return
   const { error } = await supabase.from('task_activity').insert({
@@ -346,6 +367,7 @@ async function logActivityRemote(projectId, taskId, actorId, action, detail) {
   if (error) console.warn('activity insert', error)
 }
 
+/** Escreve histórico da tarefa no modo local. */
 function logActivityLocal(projectId, taskId, actorId, actorName, action, detail) {
   saveLocalProjectPatch(projectId, (p) => {
     const row = {
@@ -363,6 +385,7 @@ function logActivityLocal(projectId, taskId, actorId, actorName, action, detail)
 }
 
 /**
+ * Cria uma tarefa nova na primeira coluna do Kanban.
  * @param {object} opts
  * @param {string} opts.projectId
  * @param {string} opts.userId
@@ -419,6 +442,7 @@ export async function createTask({ projectId, userId, userName, title }) {
 }
 
 /**
+ * Atualiza uma tarefa e registra mudanças importantes no histórico.
  * @param {object} patch
  */
 export async function updateTask(projectId, userId, userName, prevTask, patch) {
@@ -462,6 +486,7 @@ export async function updateTask(projectId, userId, userName, prevTask, patch) {
     return next
   }
 
+  // Converte nomes camelCase do React para nomes snake_case usados nas tabelas.
   const dbPatch = {}
   if (patch.title != null) dbPatch.title = patch.title
   if (patch.description != null) dbPatch.description = patch.description
@@ -494,6 +519,7 @@ export async function updateTask(projectId, userId, userName, prevTask, patch) {
       to: patch.assigneeId,
     })
     if (patch.assigneeId) {
+      // Atribuição nova vira notificação para o responsável.
       await insertNotificationRemote({
         userId: patch.assigneeId,
         projectId,
@@ -547,6 +573,7 @@ export async function reorderTasks(projectId, userId, ordered) {
   }
 
   const stamp = new Date().toISOString()
+  // RPC reduz o risco de delay: várias linhas são atualizadas em uma chamada só.
   const { error: rpcError } = await supabase.rpc('reorder_project_tasks', {
     p_project_id: projectId,
     p_items: ordered.map((o) => ({
@@ -559,6 +586,7 @@ export async function reorderTasks(projectId, userId, ordered) {
   if (!rpcError) return
   if (!isMissingRpcError(rpcError, 'reorder_project_tasks')) throw rpcError
 
+  // Fallback para bancos que ainda não receberam a RPC.
   for (const o of ordered) {
     const { error } = await supabase
       .from('tasks')
@@ -570,6 +598,7 @@ export async function reorderTasks(projectId, userId, ordered) {
 }
 
 /**
+ * Remove tarefa e seus comentários/atividades no modo local.
  * @param {string} projectId
  * @param {string} userId
  * @param {string} userName
@@ -596,6 +625,7 @@ export async function deleteTask(projectId, userId, userName, task) {
 }
 
 /**
+ * Adiciona comentário e, se houver responsável diferente, gera notificação.
  * @param {object} opts
  */
 export async function addTaskComment({ projectId, userId, userName, task, body }) {
@@ -651,10 +681,6 @@ export async function addTaskComment({ projectId, userId, userName, task, body }
   return comment
 }
 
-/**
- * @param {string} projectId
- * @param {(payload: { tasks?: boolean }) => void} onChange
- */
 /** Registra mudança de coluna no Kanban (histórico). */
 export async function recordTaskStatusChange(projectId, userId, userName, taskId, from, to) {
   if (from === to) return
@@ -667,6 +693,11 @@ export async function recordTaskStatusChange(projectId, userId, userName, taskId
   await logActivityRemote(projectId, taskId, userId, 'status_change', { from, to })
 }
 
+/**
+ * Assina mudanças de tarefas/comentários/histórico para manter o Kanban atualizado.
+ * @param {string} projectId
+ * @param {(payload: { tasks?: boolean }) => void} onChange
+ */
 export function subscribeTaskChannels(projectId, onChange) {
   if (!isRemoteCollab() || !supabase) return () => {}
 
@@ -699,6 +730,7 @@ export function subscribeTaskChannels(projectId, onChange) {
   }
 }
 
+/** Canal de Realtime separado para o menu de notificações. */
 export function subscribeNotificationChannel(userId, onChange) {
   if (!isRemoteCollab() || !supabase || !userId) return () => {}
   const channel = supabase

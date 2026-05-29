@@ -15,6 +15,7 @@ function isMissingAccentColumnError(err) {
   return /could not find|schema cache|column|42703|does not exist/i.test(msg)
 }
 
+/** Transforma lista de profiles em mapa por id para lookup rápido na UI. */
 function mapProfileRows(data) {
   return Object.fromEntries(
     (data ?? []).map((p) => [

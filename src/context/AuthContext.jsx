@@ -24,6 +24,10 @@ import { normalizeAccentColor } from '../lib/userColor'
 
 const AuthContext = createContext(null)
 
+/**
+ * Centraliza autenticação e perfil do usuário.
+ * No modo local usa localStorage; no modo online usa Supabase Auth + profiles.
+ */
 export function AuthProvider({ children }) {
   /** Modo Supabase só quando `createClient` foi possível (env no build). */
   const remote = isRemoteCollab()
@@ -45,6 +49,10 @@ export function AuthProvider({ children }) {
 
     let cancelled = false
 
+    /**
+     * Monta o usuário logado a partir de Auth + tabela profiles.
+     * A tela inteira consome esse objeto pelo hook useAuth().
+     */
     async function loadProfile(uid) {
       let data = null
       try {
@@ -108,6 +116,7 @@ export function AuthProvider({ children }) {
 
   useEffect(() => {
     if (!remote || !supabase || !userId) return
+    // Mantém nome/cor do usuário atual atualizados quando profiles muda no Supabase.
     const channel = supabase
       .channel('orgdemandas-profiles-sync')
       .on(
@@ -146,6 +155,7 @@ export function AuthProvider({ children }) {
   const user = useMemo(() => {
     if (remote) return remoteUser
     if (!userId) return null
+    // Força recalcular o usuário local quando a configuração de perfil muda.
     void localProfileTick
     const users = getUsers()
     const row = users.find((u) => u.id === userId)
@@ -158,6 +168,7 @@ export function AuthProvider({ children }) {
 
   const login = useCallback(
     async (email, password) => {
+      // Mesma API de login para os dois modos; o resto do app não precisa saber a origem.
       if (remote && supabase) {
         const { error } = await supabase.auth.signInWithPassword({
           email: email.trim(),
@@ -180,6 +191,7 @@ export function AuthProvider({ children }) {
 
   const register = useCallback(
     async (name, email, password) => {
+      // Cadastro remoto pode exigir confirmação por e-mail, por isso retorna needsEmailConfirm.
       if (remote && supabase) {
         const { data, error } = await supabase.auth.signUp({
           email: email.trim(),
@@ -229,6 +241,7 @@ export function AuthProvider({ children }) {
 
   const updateAccentColor = useCallback(
     async (input) => {
+      // Cor do perfil identifica a pessoa em cards, chat e comentários.
       if (!userId) return { ok: false, error: 'Sem sessão.' }
       const clear = input === null || input === ''
       const normalized = clear ? null : normalizeAccentColor(input)
@@ -257,6 +270,7 @@ export function AuthProvider({ children }) {
 
   const updatePassword = useCallback(
     async (password) => {
+      // Senha é atualizada no Supabase Auth ou no usuário salvo localmente.
       if (!userId) return { ok: false, error: 'Sem sessão.' }
       const nextPassword = String(password ?? '')
       if (nextPassword.length < 6) {
