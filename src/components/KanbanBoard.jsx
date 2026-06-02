@@ -15,7 +15,14 @@ import {
   useSortable,
 } from '@dnd-kit/sortable'
 import { CSS } from '@dnd-kit/utilities'
-import { CalendarDays, ExternalLink, GripVertical, MessageSquare, UserRound } from 'lucide-react'
+import {
+  CalendarDays,
+  ExternalLink,
+  GripVertical,
+  MessageSquare,
+  SlidersHorizontal,
+  UserRound,
+} from 'lucide-react'
 import { useAuth } from '../context/AuthContext'
 import { isRemoteCollab } from '../lib/collabApi'
 import { REMOTE_POLL_INTERVAL_MS } from '../lib/remoteSync'
@@ -194,6 +201,7 @@ export function KanbanBoard({ projectId, user, openTaskId, onOpenTaskId }) {
   const [filterAssignee, setFilterAssignee] = useState('')
   const [filterPriority, setFilterPriority] = useState('')
   const [filterText, setFilterText] = useState('')
+  const [filtersOpen, setFiltersOpen] = useState(false)
   const pollBusyRef = useRef(false)
   const draggingRef = useRef(false)
   const reorderBusyRef = useRef(false)
@@ -338,6 +346,7 @@ export function KanbanBoard({ projectId, user, openTaskId, onOpenTaskId }) {
   }, [comments])
 
   const activeTask = useMemo(() => tasks.find((t) => t.id === activeId), [tasks, activeId])
+  const hasActiveFilters = Boolean(filterAssignee || filterPriority || filterText.trim())
 
   const applyReorder = async (nextTasks, statusChange) => {
     // Atualização otimista: primeiro move na tela, depois persiste no backend.
@@ -482,51 +491,64 @@ export function KanbanBoard({ projectId, user, openTaskId, onOpenTaskId }) {
       {error ? <p className="kanban-root__error">{error}</p> : null}
 
       <div className="kanban-toolbar">
-        <form onSubmit={handleCreate} className="kanban-new">
-          <input
-            value={newTitle}
-            onChange={(e) => setNewTitle(e.target.value)}
-            placeholder="Nova tarefa…"
-            className="kanban-new__input"
-            aria-label="Título da nova tarefa"
-          />
-          <button type="submit" className="btn btn--primary btn--sm">
-            Adicionar
-          </button>
-        </form>
-
-        <div className="kanban-filters">
-          <label className="kanban-filters__field">
-            <span>Busca</span>
+        <div className="kanban-toolbar__main">
+          <form onSubmit={handleCreate} className="kanban-new">
             <input
-              value={filterText}
-              onChange={(e) => setFilterText(e.target.value)}
-              placeholder="Título ou descrição"
+              value={newTitle}
+              onChange={(e) => setNewTitle(e.target.value)}
+              placeholder="Nova tarefa…"
+              className="kanban-new__input"
+              aria-label="Título da nova tarefa"
             />
-          </label>
-          <label className="kanban-filters__field">
-            <span>Responsável</span>
-            <select value={filterAssignee} onChange={(e) => setFilterAssignee(e.target.value)}>
-              <option value="">Todos</option>
-              {members.map((m) => (
-                <option key={m.id} value={m.id}>
-                  {m.name}
-                </option>
-              ))}
-            </select>
-          </label>
-          <label className="kanban-filters__field">
-            <span>Prioridade</span>
-            <select value={filterPriority} onChange={(e) => setFilterPriority(e.target.value)}>
-              <option value="">Todas</option>
-              {PRIORITIES.map((p) => (
-                <option key={p.id} value={p.id}>
-                  {p.emoji} {p.label}
-                </option>
-              ))}
-            </select>
-          </label>
+            <button type="submit" className="btn btn--primary btn--sm">
+              Adicionar
+            </button>
+          </form>
+          <button
+            type="button"
+            className={`btn btn--ghost btn--sm kanban-filter-toggle${filtersOpen ? ' kanban-filter-toggle--open' : ''}`}
+            aria-expanded={filtersOpen}
+            onClick={() => setFiltersOpen((v) => !v)}
+          >
+            <SlidersHorizontal size={15} strokeWidth={2.2} aria-hidden />
+            Filtros{hasActiveFilters ? ' ativos' : ''}
+          </button>
         </div>
+
+        {filtersOpen ? (
+          <div className="kanban-filters">
+            <label className="kanban-filters__field">
+              <span>Busca</span>
+              <input
+                value={filterText}
+                onChange={(e) => setFilterText(e.target.value)}
+                placeholder="Título ou descrição"
+              />
+            </label>
+            <label className="kanban-filters__field">
+              <span>Responsável</span>
+              <select value={filterAssignee} onChange={(e) => setFilterAssignee(e.target.value)}>
+                <option value="">Todos</option>
+                {members.map((m) => (
+                  <option key={m.id} value={m.id}>
+                    {m.name}
+                  </option>
+                ))}
+              </select>
+            </label>
+            <label className="kanban-filters__field">
+              <span>Prioridade</span>
+              <select value={filterPriority} onChange={(e) => setFilterPriority(e.target.value)}>
+                <option value="">Todas</option>
+                {PRIORITIES.map((p) => (
+                  <option key={p.id} value={p.id}>
+                    {p.emoji} {p.label}
+                  </option>
+                ))}
+              </select>
+            </label>
+          </div>
+        ) : null}
       </div>
 
       <DndContext

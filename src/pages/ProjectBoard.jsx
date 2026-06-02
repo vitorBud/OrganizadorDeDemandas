@@ -302,57 +302,62 @@ export function ProjectBoard() {
         </Link>
         <div className="project-board__head">
           <h1 className="project-board__title">{project.name}</h1>
-          <div className="project-board__code-row">
-            <span className="project-board__code-label">Código da sala</span>
-            <code className="project-board__code">{project.joinCode}</code>
-            <button type="button" className="btn btn--ghost btn--sm" onClick={copyCode}>
-              {copied ? 'Copiado!' : 'Copiar'}
-            </button>
-          </div>
-          <div className="project-board__group-menu">
-            {project.ownerId === userId ? (
-              <button
-                type="button"
-                className="btn btn--ghost btn--sm btn--danger"
-                onClick={() => void handleDeleteGroup()}
-                disabled={groupActionBusy}
-              >
-                Excluir grupo
-              </button>
-            ) : (
-              <button
-                type="button"
-                className="btn btn--ghost btn--sm"
-                onClick={() => void handleLeaveGroup()}
-                disabled={groupActionBusy}
-              >
-                Sair do grupo
-              </button>
-            )}
-          </div>
-          {groupError ? <p className="project-board__group-error">{groupError}</p> : null}
-          {project.ownerId === userId && members.length > 1 ? (
-            <div className="project-board__members">
-              <p className="project-board__members-title">Gerenciar membros</p>
-              <ul className="project-board__members-list">
-                {members
-                  .filter((m) => m.id !== userId)
-                  .map((m) => (
-                    <li key={m.id} className="project-board__member-item">
-                      <span>{m.name}</span>
-                      <button
-                        type="button"
-                        className="btn btn--ghost btn--sm btn--danger"
-                        onClick={() => void handleKickMember(m.id, m.name)}
-                        disabled={groupActionBusy}
-                      >
-                        Expulsar
-                      </button>
-                    </li>
-                  ))}
-              </ul>
+          <details className="project-board__options">
+            <summary>Opções do grupo</summary>
+            <div className="project-board__options-panel">
+              <div className="project-board__code-row">
+                <span className="project-board__code-label">Código da sala</span>
+                <code className="project-board__code">{project.joinCode}</code>
+                <button type="button" className="btn btn--ghost btn--sm" onClick={copyCode}>
+                  {copied ? 'Copiado!' : 'Copiar'}
+                </button>
+              </div>
+              <div className="project-board__group-menu">
+                {project.ownerId === userId ? (
+                  <button
+                    type="button"
+                    className="btn btn--ghost btn--sm btn--danger"
+                    onClick={() => void handleDeleteGroup()}
+                    disabled={groupActionBusy}
+                  >
+                    Excluir grupo
+                  </button>
+                ) : (
+                  <button
+                    type="button"
+                    className="btn btn--ghost btn--sm"
+                    onClick={() => void handleLeaveGroup()}
+                    disabled={groupActionBusy}
+                  >
+                    Sair do grupo
+                  </button>
+                )}
+              </div>
+              {groupError ? <p className="project-board__group-error">{groupError}</p> : null}
+              {project.ownerId === userId && members.length > 1 ? (
+                <div className="project-board__members">
+                  <p className="project-board__members-title">Gerenciar membros</p>
+                  <ul className="project-board__members-list">
+                    {members
+                      .filter((m) => m.id !== userId)
+                      .map((m) => (
+                        <li key={m.id} className="project-board__member-item">
+                          <span>{m.name}</span>
+                          <button
+                            type="button"
+                            className="btn btn--ghost btn--sm btn--danger"
+                            onClick={() => void handleKickMember(m.id, m.name)}
+                            disabled={groupActionBusy}
+                          >
+                            Expulsar
+                          </button>
+                        </li>
+                      ))}
+                  </ul>
+                </div>
+              ) : null}
             </div>
-          ) : null}
+          </details>
         </div>
       </div>
 

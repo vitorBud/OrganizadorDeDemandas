@@ -1,17 +1,17 @@
 import { normalizeAccentColor } from './userColor'
 
-export const DEFAULT_THEME_ACCENT = '#ff8c00'
+export const DEFAULT_THEME_ACCENT = '#6d4aff'
 export const THEME_ACCENT_STORAGE_KEY = 'orgdemandas_theme_accent'
 
 export const THEME_ACCENT_PRESETS = [
   DEFAULT_THEME_ACCENT,
-  '#f97316',
-  '#e11d48',
   '#7c3aed',
   '#2563eb',
   '#0891b2',
   '#0d9488',
   '#16a34a',
+  '#e11d48',
+  '#f97316',
   '#ca8a04',
 ]
 
@@ -60,7 +60,7 @@ function rgbString(hex) {
   return `${r}, ${g}, ${b}`
 }
 
-/** Lê a cor principal salva; se algo falhar, volta para o laranja original. */
+/** Lê a cor principal salva; se algo falhar, volta para o tema padrão. */
 export function readStoredThemeAccent() {
   try {
     return normalizeAccentColor(localStorage.getItem(THEME_ACCENT_STORAGE_KEY)) || DEFAULT_THEME_ACCENT

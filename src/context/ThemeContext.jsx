@@ -14,9 +14,9 @@ const ThemeContext = createContext(null)
 /** Lê a preferência claro/escuro salva no navegador. */
 function readPreference() {
   try {
-    return localStorage.getItem(STORAGE_KEY) || 'dark'
+    return localStorage.getItem(STORAGE_KEY) || 'light'
   } catch {
-    return 'dark'
+    return 'light'
   }
 }
 

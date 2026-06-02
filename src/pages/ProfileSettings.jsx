@@ -91,7 +91,7 @@ export function ProfileSettings() {
   const onThemeReset = useCallback(() => {
     resetAccentColor()
     setThemeHex(defaultAccentColor)
-    setThemeMessage('Tema original laranja ativado.')
+    setThemeMessage('Tema padrão ativado.')
   }, [defaultAccentColor, resetAccentColor])
 
   const onPasswordSave = useCallback(async () => {
@@ -230,7 +230,7 @@ export function ProfileSettings() {
             Aplicar tema
           </button>
           <button type="button" className="btn btn--ghost btn--sm" onClick={onThemeReset}>
-            Voltar ao laranja
+            Voltar ao padrão
           </button>
         </div>
 
