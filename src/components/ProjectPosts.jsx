@@ -1,4 +1,5 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
+import { Link2, List, ListOrdered, MoreHorizontal, Pencil, SlidersHorizontal, Trash2 } from 'lucide-react'
 import { isRemoteCollab, newRemoteId } from '../lib/collabApi'
 import { generateId } from '../lib/storage'
 import { accentColorForDisplay } from '../lib/userColor'
@@ -13,6 +14,123 @@ import {
 import './ProjectPosts.css'
 
 const EMPTY_DRAFT = { title: '', body: '' }
+
+const MARKDOWN_LINK_RE = /\[([^\]]+)\]\(([^)\s]+)\)/g
+const LIST_MARKER_RE = /^\s*(?:[-*]|\d+[.)])\s+/
+
+function normalizeHref(rawUrl) {
+  const trimmed = String(rawUrl ?? '').trim()
+  if (!trimmed) return ''
+  const withProtocol = /^[a-z][a-z0-9+.-]*:/i.test(trimmed) ? trimmed : `https://${trimmed}`
+  try {
+    const url = new URL(withProtocol)
+    if (!['http:', 'https:', 'mailto:', 'tel:'].includes(url.protocol)) return ''
+    return url.href
+  } catch {
+    return ''
+  }
+}
+
+function renderInlineContent(text, keyPrefix) {
+  const pieces = []
+  let lastIndex = 0
+  let match
+  MARKDOWN_LINK_RE.lastIndex = 0
+
+  while ((match = MARKDOWN_LINK_RE.exec(text)) !== null) {
+    const [raw, label, href] = match
+    const safeHref = normalizeHref(href)
+    if (match.index > lastIndex) {
+      pieces.push(text.slice(lastIndex, match.index))
+    }
+    pieces.push(
+      safeHref ? (
+        <a
+          key={`${keyPrefix}-link-${match.index}`}
+          href={safeHref}
+          target="_blank"
+          rel="noreferrer"
+        >
+          {label}
+        </a>
+      ) : (
+        raw
+      )
+    )
+    lastIndex = match.index + raw.length
+  }
+
+  if (lastIndex < text.length) pieces.push(text.slice(lastIndex))
+  return pieces.length ? pieces : text
+}
+
+function renderTextLines(lines, keyPrefix) {
+  return lines.map((line, index) => (
+    <span key={`${keyPrefix}-line-${index}`}>
+      {index > 0 ? <br /> : null}
+      {renderInlineContent(line, `${keyPrefix}-${index}`)}
+    </span>
+  ))
+}
+
+function renderPostContent(content) {
+  const nodes = []
+  const paragraphLines = []
+  let listType = null
+  let listItems = []
+
+  const flushParagraph = () => {
+    if (!paragraphLines.length) return
+    const key = `p-${nodes.length}`
+    nodes.push(<p key={key}>{renderTextLines(paragraphLines, key)}</p>)
+    paragraphLines.length = 0
+  }
+
+  const flushList = () => {
+    if (!listItems.length) return
+    const key = `list-${nodes.length}`
+    const Tag = listType === 'numbered' ? 'ol' : 'ul'
+    nodes.push(
+      <Tag key={key}>
+        {listItems.map((item, index) => (
+          <li key={`${key}-${index}`}>{renderInlineContent(item, `${key}-${index}`)}</li>
+        ))}
+      </Tag>
+    )
+    listType = null
+    listItems = []
+  }
+
+  String(content ?? '')
+    .split(/\r?\n/)
+    .forEach((line) => {
+      const bullet = line.match(/^\s*[-*]\s+(.+)$/)
+      const numbered = line.match(/^\s*\d+[.)]\s+(.+)$/)
+
+      if (!line.trim()) {
+        flushParagraph()
+        flushList()
+        return
+      }
+
+      if (bullet || numbered) {
+        const nextType = numbered ? 'numbered' : 'bullet'
+        flushParagraph()
+        if (listType && listType !== nextType) flushList()
+        listType = nextType
+        listItems.push((bullet?.[1] ?? numbered?.[1] ?? '').trim())
+        return
+      }
+
+      flushList()
+      paragraphLines.push(line)
+    })
+
+  flushParagraph()
+  flushList()
+
+  return nodes.length ? nodes : <p>{renderInlineContent(content, 'empty')}</p>
+}
 
 /**
  * Mural de postagens do projeto.
@@ -33,8 +151,11 @@ export function ProjectPosts({
   const [composing, setComposing] = useState(false)
   const [editingId, setEditingId] = useState(null)
   const [draft, setDraft] = useState(EMPTY_DRAFT)
+  const [linkText, setLinkText] = useState('')
+  const [linkUrl, setLinkUrl] = useState('')
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState('')
+  const textareaRef = useRef(null)
 
   const posts = useMemo(() => postsFromBlocks(blocks), [blocks])
   const isLeader = ownerId === userId
@@ -71,6 +192,8 @@ export function ProjectPosts({
     setError('')
     setEditingId(null)
     setDraft(EMPTY_DRAFT)
+    setLinkText('')
+    setLinkUrl('')
     setComposing(true)
   }
 
@@ -79,6 +202,8 @@ export function ProjectPosts({
     setError('')
     setComposing(false)
     setEditingId(post.id)
+    setLinkText('')
+    setLinkUrl('')
     setDraft({ title: post.title, body: post.content })
   }
 
@@ -86,6 +211,65 @@ export function ProjectPosts({
     setComposing(false)
     setEditingId(null)
     setDraft(EMPTY_DRAFT)
+    setLinkText('')
+    setLinkUrl('')
+    setError('')
+  }
+
+  function replaceSelection(replacement) {
+    const el = textareaRef.current
+    const body = draft.body
+    const start = el?.selectionStart ?? body.length
+    const end = el?.selectionEnd ?? body.length
+    const next = `${body.slice(0, start)}${replacement}${body.slice(end)}`
+    setDraft((d) => ({ ...d, body: next }))
+
+    requestAnimationFrame(() => {
+      if (!textareaRef.current) return
+      textareaRef.current.focus()
+      textareaRef.current.setSelectionRange(start + replacement.length, start + replacement.length)
+    })
+  }
+
+  function selectedBodyText() {
+    const el = textareaRef.current
+    if (!el) return ''
+    return draft.body.slice(el.selectionStart, el.selectionEnd)
+  }
+
+  function applyList(kind) {
+    const selected = selectedBodyText()
+    let count = 0
+    const fallback = kind === 'numbered' ? '1. Primeiro item\n2. Segundo item' : '- Primeiro item\n- Segundo item'
+    const replacement = selected.trim()
+      ? selected
+          .split(/\r?\n/)
+          .map((line) => {
+            const clean = line.replace(LIST_MARKER_RE, '').trim()
+            if (!clean) return ''
+            if (kind === 'numbered') {
+              count += 1
+              return `${count}. ${clean}`
+            }
+            return `- ${clean}`
+          })
+          .join('\n')
+      : fallback
+
+    replaceSelection(replacement)
+  }
+
+  function insertLink() {
+    const href = normalizeHref(linkUrl)
+    if (!href) {
+      setError('Informe um link válido.')
+      return
+    }
+    const selected = selectedBodyText().trim()
+    const label = (linkText.trim() || selected || 'link').replace(/\]/g, ')')
+    replaceSelection(`[${label}](${href})`)
+    setLinkText('')
+    setLinkUrl('')
     setError('')
   }
 
@@ -190,6 +374,7 @@ export function ProjectPosts({
           <label className="project-posts__field">
             <span>Conteúdo</span>
             <textarea
+              ref={textareaRef}
               value={draft.body}
               onChange={(e) => setDraft((d) => ({ ...d, body: e.target.value }))}
               placeholder="Detalhes, links, próximos passos…"
@@ -197,6 +382,64 @@ export function ProjectPosts({
               disabled={busy}
             />
           </label>
+          <details className="project-posts__tools">
+            <summary>
+              <SlidersHorizontal size={15} strokeWidth={2.1} aria-hidden />
+              Ferramentas
+            </summary>
+            <div className="project-posts__tools-panel">
+              <div className="project-posts__tools-row" aria-label="Formatar como lista">
+                <button
+                  type="button"
+                  className="btn btn--ghost btn--sm"
+                  onClick={() => applyList('bullet')}
+                  disabled={busy}
+                  title="Tópicos"
+                >
+                  <List size={15} strokeWidth={2.1} aria-hidden />
+                  Tópicos
+                </button>
+                <button
+                  type="button"
+                  className="btn btn--ghost btn--sm"
+                  onClick={() => applyList('numbered')}
+                  disabled={busy}
+                  title="Numeração"
+                >
+                  <ListOrdered size={15} strokeWidth={2.1} aria-hidden />
+                  Numeração
+                </button>
+              </div>
+              <div className="project-posts__link-tools">
+                <input
+                  type="text"
+                  value={linkText}
+                  onChange={(e) => setLinkText(e.target.value)}
+                  placeholder="Palavra"
+                  aria-label="Texto do link"
+                  disabled={busy}
+                />
+                <input
+                  type="url"
+                  value={linkUrl}
+                  onChange={(e) => setLinkUrl(e.target.value)}
+                  placeholder="https://..."
+                  aria-label="Endereço do link"
+                  disabled={busy}
+                />
+                <button
+                  type="button"
+                  className="btn btn--ghost btn--sm"
+                  onClick={insertLink}
+                  disabled={busy}
+                  title="Inserir link"
+                >
+                  <Link2 size={15} strokeWidth={2.1} aria-hidden />
+                  Link
+                </button>
+              </div>
+            </div>
+          </details>
           <div className="project-posts__composer-actions">
             <button type="submit" className="btn btn--primary btn--sm" disabled={busy}>
               {busy ? 'Salvando…' : editingId ? 'Salvar alterações' : 'Publicar'}
@@ -250,27 +493,34 @@ export function ProjectPosts({
                     </p>
                   </div>
                   {canModifyPost(post) ? (
-                    <div className="project-posts__item-actions">
-                      <button
-                        type="button"
-                        className="btn btn--ghost btn--sm"
-                        onClick={() => startEdit(post)}
-                        disabled={busy || editingId === post.id}
-                      >
-                        Editar
-                      </button>
-                      <button
-                        type="button"
-                        className="btn btn--ghost btn--sm btn--danger"
-                        onClick={() => void handleDelete(post)}
-                        disabled={busy}
-                      >
-                        Excluir
-                      </button>
-                    </div>
+                    <details className="project-posts__item-actions">
+                      <summary aria-label="Ações da postagem" title="Ações">
+                        <MoreHorizontal size={17} strokeWidth={2.1} aria-hidden />
+                      </summary>
+                      <div className="project-posts__item-menu">
+                        <button
+                          type="button"
+                          className="btn btn--ghost btn--sm"
+                          onClick={() => startEdit(post)}
+                          disabled={busy || editingId === post.id}
+                        >
+                          <Pencil size={14} strokeWidth={2.1} aria-hidden />
+                          Editar
+                        </button>
+                        <button
+                          type="button"
+                          className="btn btn--ghost btn--sm btn--danger"
+                          onClick={() => void handleDelete(post)}
+                          disabled={busy}
+                        >
+                          <Trash2 size={14} strokeWidth={2.1} aria-hidden />
+                          Excluir
+                        </button>
+                      </div>
+                    </details>
                   ) : null}
                 </header>
-                <div className="project-posts__body">{post.content}</div>
+                <div className="project-posts__body">{renderPostContent(post.content)}</div>
               </li>
             )
           })}
