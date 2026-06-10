@@ -1,7 +1,7 @@
 .workspace__title {
   font-family: var(--font-display);
   font-size: clamp(1.6rem, 3vw, 2.15rem);
-  font-weight: 400;
+  font-weight: 800;
   margin: 0 0 10px;
   text-align: left;
   color: var(--text-h);
@@ -56,28 +56,28 @@
 .workspace__panel {
   text-align: left;
   padding: 20px;
-  border: 1px solid var(--border);
+  border: 1px solid var(--glass-border);
   border-radius: var(--radius-lg);
   background: var(--panel-gradient);
-  backdrop-filter: blur(14px) saturate(1.12);
-  -webkit-backdrop-filter: blur(14px) saturate(1.12);
-  box-shadow: var(--shadow);
+  backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-saturation));
+  -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-saturation));
+  box-shadow: var(--glass-shadow);
   transition:
-    border-color 0.2s ease,
-    box-shadow 0.2s ease,
-    transform 0.2s ease;
+    border-color var(--motion-fast) ease,
+    box-shadow var(--motion-fast) ease,
+    transform var(--motion-fast) ease;
 }
 
 .workspace__panel:hover {
   border-color: var(--accent-border);
-  box-shadow: var(--shadow-lift);
+  box-shadow: var(--glass-shadow-lift);
   transform: translateY(-1px);
 }
 
 .workspace__panel h2 {
   font-family: var(--font-display);
   font-size: 1.04rem;
-  font-weight: 400;
+  font-weight: 800;
   margin: 0 0 16px;
 }
 
@@ -101,20 +101,20 @@
   font-family: var(--font-sans);
   min-height: 42px;
   padding: 10px 12px;
-  border: 1px solid var(--border);
+  border: 1px solid var(--glass-border);
   border-radius: var(--radius-sm);
-  background: color-mix(in srgb, var(--bg) 84%, transparent);
+  background: color-mix(in srgb, var(--glass-control) 84%, transparent);
   color: var(--text-h);
   transition:
-    border-color 0.2s ease,
-    box-shadow 0.2s ease,
-    background 0.2s ease;
+    border-color var(--motion-fast) ease,
+    box-shadow var(--motion-fast) ease,
+    background var(--motion-fast) ease;
 }
 
 .workspace__input:focus {
   outline: none;
   border-color: var(--accent-border);
-  background: color-mix(in srgb, var(--bg) 96%, transparent);
+  background: color-mix(in srgb, var(--glass-control) 96%, transparent);
   box-shadow: 0 0 0 3px var(--accent-bg);
 }
 
@@ -130,7 +130,7 @@
 .workspace__list-section h2 {
   font-family: var(--font-display);
   font-size: 1.08rem;
-  font-weight: 400;
+  font-weight: 800;
   margin: 0 0 14px;
 }
 
@@ -152,23 +152,25 @@
   flex-direction: column;
   gap: 5px;
   padding: 16px 18px;
-  border: 1px solid var(--border);
+  border: 1px solid var(--glass-border);
   border-radius: var(--radius-md);
   text-decoration: none;
   color: inherit;
-  background: color-mix(in srgb, var(--surface) 82%, transparent);
-  box-shadow: var(--shadow);
+  background: color-mix(in srgb, var(--glass-surface) 82%, transparent);
+  box-shadow: var(--glass-shadow);
+  backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-saturation));
+  -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-saturation));
   transition:
-    transform 0.2s ease,
-    border-color 0.2s ease,
-    box-shadow 0.2s ease,
-    background 0.2s ease;
+    transform var(--motion-fast) ease,
+    border-color var(--motion-fast) ease,
+    box-shadow var(--motion-fast) ease,
+    background var(--motion-fast) ease;
 }
 
 .workspace__link:hover {
   border-color: var(--accent-border);
-  box-shadow: var(--shadow-lift);
-  background: color-mix(in srgb, var(--accent-bg) 24%, var(--surface));
+  box-shadow: var(--glass-shadow-lift);
+  background: color-mix(in srgb, var(--accent-bg) 28%, var(--glass-surface));
   transform: translateY(-1px);
 }
 

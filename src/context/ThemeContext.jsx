@@ -5,6 +5,12 @@ import {
   applyThemeAccent,
   readStoredThemeAccent,
 } from '../lib/themeAccent'
+import {
+  DEFAULT_THEME_APPEARANCE,
+  THEME_APPEARANCE_STORAGE_KEY,
+  normalizeThemeAppearance,
+  readStoredThemeAppearance,
+} from '../lib/themeAppearance'
 import { normalizeAccentColor } from '../lib/userColor'
 
 const STORAGE_KEY = 'orgdemandas_theme'
@@ -32,6 +38,7 @@ function systemIsDark() {
 export function ThemeProvider({ children }) {
   const [preference, setPreferenceState] = useState(readPreference)
   const [accentColor, setAccentColorState] = useState(readStoredThemeAccent)
+  const [appearance, setAppearanceState] = useState(readStoredThemeAppearance)
   const [systemDark, setSystemDark] = useState(() => systemIsDark())
 
   const setPreference = (value) => {
@@ -65,6 +72,25 @@ export function ThemeProvider({ children }) {
     }
   }
 
+  const setAppearance = (value) => {
+    const normalized = normalizeThemeAppearance(value)
+    setAppearanceState(normalized)
+    try {
+      localStorage.setItem(THEME_APPEARANCE_STORAGE_KEY, normalized)
+    } catch {
+      /* ignore */
+    }
+  }
+
+  const resetAppearance = () => {
+    setAppearanceState(DEFAULT_THEME_APPEARANCE)
+    try {
+      localStorage.removeItem(THEME_APPEARANCE_STORAGE_KEY)
+    } catch {
+      /* ignore */
+    }
+  }
+
   const effective = useMemo(() => {
     if (preference === 'system') return systemDark ? 'dark' : 'light'
     return preference
@@ -73,8 +99,9 @@ export function ThemeProvider({ children }) {
   useLayoutEffect(() => {
     // useLayoutEffect aplica antes da pintura final, reduzindo piscar visual.
     document.documentElement.setAttribute('data-theme', effective)
+    document.documentElement.setAttribute('data-appearance', appearance)
     applyThemeAccent(accentColor, effective)
-  }, [effective, accentColor])
+  }, [effective, accentColor, appearance])
 
   useEffect(() => {
     const mq = window.matchMedia('(prefers-color-scheme: dark)')
@@ -92,8 +119,12 @@ export function ThemeProvider({ children }) {
       setAccentColor,
       resetAccentColor,
       defaultAccentColor: DEFAULT_THEME_ACCENT,
+      appearance,
+      setAppearance,
+      resetAppearance,
+      defaultAppearance: DEFAULT_THEME_APPEARANCE,
     }),
-    [preference, effective, accentColor]
+    [preference, effective, accentColor, appearance]
   )
 
   return <ThemeContext.Provider value={value}>{children}</ThemeContext.Provider>

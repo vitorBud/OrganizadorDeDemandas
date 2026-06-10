@@ -1,5 +1,6 @@
 .kanban-root {
   text-align: left;
+  animation: aesthetic-rise var(--motion-med) ease both;
 }
 
 .kanban-root--loading {
@@ -22,6 +23,13 @@
   flex-direction: column;
   gap: 10px;
   margin-bottom: 12px;
+  padding: 10px;
+  border: 1px solid var(--glass-border);
+  border-radius: var(--radius-md);
+  background: color-mix(in srgb, var(--glass-surface) 84%, transparent);
+  backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-saturation));
+  -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-saturation));
+  box-shadow: var(--glass-shadow);
 }
 
 .kanban-toolbar__main {
@@ -46,8 +54,8 @@
   font: inherit;
   padding: 9px 11px;
   border-radius: var(--radius-sm);
-  border: 1px solid var(--border);
-  background: color-mix(in srgb, var(--bg) 84%, transparent);
+  border: 1px solid var(--glass-border);
+  background: color-mix(in srgb, var(--glass-control) 82%, transparent);
   color: var(--text-h);
 }
 
@@ -63,10 +71,13 @@
   gap: 9px 12px;
   align-items: flex-end;
   padding: 10px 11px;
-  border: 1px solid var(--border);
+  border: 1px solid var(--glass-border);
   border-radius: var(--radius-md);
-  background: var(--surface-strong);
-  box-shadow: var(--shadow);
+  background: color-mix(in srgb, var(--glass-surface-strong) 88%, transparent);
+  box-shadow: var(--glass-shadow);
+  backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-saturation));
+  -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-saturation));
+  animation: aesthetic-rise var(--motion-med) ease both;
 }
 
 .kanban-filter-toggle--open,
@@ -92,7 +103,7 @@
   font: inherit;
   padding: 7px 9px;
   border-radius: var(--radius-sm);
-  border: 1px solid var(--border);
+  border: 1px solid var(--glass-border);
   background: color-mix(in srgb, var(--bg) 84%, transparent);
   color: var(--text-h);
 }
@@ -106,28 +117,36 @@
 
 .kanban-columns {
   display: flex;
-  gap: 10px;
+  gap: 12px;
   overflow-x: auto;
-  padding: 2px 2px 8px;
+  padding: 2px 2px 12px;
   scroll-snap-type: x proximity;
 }
 
 .kanban-column {
   flex: 0 0 min(270px, 82vw);
   scroll-snap-align: start;
-  border: 1px solid var(--border);
+  border: 1px solid var(--glass-border);
   border-radius: var(--radius-md);
   background:
-    linear-gradient(180deg, color-mix(in srgb, var(--surface-strong) 72%, transparent), color-mix(in srgb, var(--bg) 74%, transparent));
+    linear-gradient(180deg, color-mix(in srgb, var(--glass-surface-strong) 82%, transparent), color-mix(in srgb, var(--glass-surface) 84%, transparent));
   min-height: 232px;
   display: flex;
   flex-direction: column;
-  box-shadow: var(--shadow);
+  box-shadow: var(--glass-shadow);
+  backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-saturation));
+  -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-saturation));
+  transition:
+    transform var(--motion-med) ease,
+    border-color var(--motion-fast) ease,
+    box-shadow var(--motion-fast) ease;
 }
 
 .kanban-column--over {
   outline: 2px solid var(--accent-border);
   outline-offset: 2px;
+  transform: translateY(-2px);
+  box-shadow: var(--glass-shadow-lift);
 }
 
 .kanban-column__head {
@@ -136,8 +155,8 @@
   justify-content: space-between;
   gap: 10px;
   padding: 9px 10px;
-  border-bottom: 1px solid var(--border);
-  background: color-mix(in srgb, var(--surface-strong) 72%, transparent);
+  border-bottom: 1px solid var(--glass-border);
+  background: color-mix(in srgb, var(--glass-control) 76%, transparent);
 }
 
 .kanban-column__title {
@@ -192,6 +211,7 @@
   padding: 10px 8px;
   border: 1px dashed var(--border);
   border-radius: var(--radius-sm);
+  background: color-mix(in srgb, var(--glass-control) 48%, transparent);
 }
 
 .kanban-card {
@@ -199,18 +219,22 @@
   border: 1px solid var(--border);
   border-radius: var(--radius-sm);
   padding: 8px;
-  background: color-mix(in srgb, var(--surface-strong) 96%, transparent);
-  box-shadow: var(--shadow);
+  background: color-mix(in srgb, var(--surface-strong) 96%, var(--bg-page));
+  box-shadow:
+    rgba(18, 24, 38, 0.09) 0 12px 24px -20px,
+    rgba(255, 255, 255, 0.55) 0 1px 0 inset;
   cursor: default;
   transition:
-    border-color 0.15s ease,
-    box-shadow 0.15s ease,
-    transform 0.15s ease;
+    border-color var(--motion-fast) ease,
+    box-shadow var(--motion-fast) ease,
+    transform var(--motion-fast) ease,
+    background var(--motion-fast) ease;
 }
 
 .kanban-card:hover {
   border-color: var(--border-strong);
-  transform: translateY(-1px);
+  transform: translateY(-2px);
+  box-shadow: var(--glass-shadow-lift);
 }
 
 .kanban-card__desc {
@@ -251,14 +275,19 @@
   cursor: grab;
   border: 1px solid var(--border);
   border-radius: var(--radius-sm);
-  background: color-mix(in srgb, var(--bg) 84%, transparent);
+  background: color-mix(in srgb, var(--glass-control) 78%, transparent);
   color: var(--text-muted);
   padding: 0;
+  transition:
+    transform var(--motion-fast) ease,
+    border-color var(--motion-fast) ease,
+    color var(--motion-fast) ease;
 }
 
 .kanban-card__handle:hover {
   color: var(--accent-hot);
   border-color: var(--accent-border);
+  transform: scale(1.04);
 }
 
 .kanban-card__handle:active {
@@ -267,17 +296,17 @@
 
 .kanban-card__open {
   height: 30px;
-  min-width: 64px;
+  min-width: 30px;
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  gap: 5px;
+  gap: 0;
   font: inherit;
   font-size: 0.74rem;
   font-weight: 800;
   border: 1px solid var(--accent-border);
   border-radius: var(--radius-sm);
-  padding: 0 8px;
+  padding: 0;
   background: var(--accent-bg);
   color: var(--accent-hot);
   cursor: pointer;
@@ -286,6 +315,16 @@
 
 .kanban-card__open:hover {
   background: color-mix(in srgb, var(--accent-bg) 65%, var(--surface));
+  transform: scale(1.04);
+}
+
+.kanban-card__open span {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
 }
 
 .kanban-card__priority-chip,
@@ -297,7 +336,7 @@
   gap: 5px;
   border: 1px solid var(--border);
   border-radius: var(--radius-sm);
-  background: color-mix(in srgb, var(--bg) 78%, transparent);
+  background: color-mix(in srgb, var(--glass-control) 72%, transparent);
   color: var(--text);
   font-size: 0.72rem;
   font-weight: 800;

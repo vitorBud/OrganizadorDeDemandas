@@ -64,6 +64,24 @@
     rgba(20, 24, 32, 0.16) 0 18px 48px -24px,
     rgba(var(--accent-rgb), 0.18) 0 0 28px -18px,
     rgba(255, 255, 255, 0.92) 0 1px 0 inset;
+  --glass-blur: 24px;
+  --glass-saturation: 1.22;
+  --glass-surface: rgba(255, 255, 255, 0.58);
+  --glass-surface-strong: rgba(255, 255, 255, 0.78);
+  --glass-fill: color-mix(in srgb, var(--glass-surface) 88%, var(--bg-page));
+  --glass-border: rgba(255, 255, 255, 0.52);
+  --glass-highlight: rgba(255, 255, 255, 0.7);
+  --glass-shadow:
+    rgba(18, 24, 38, 0.1) 0 18px 46px -28px,
+    rgba(18, 24, 38, 0.05) 0 1px 2px,
+    var(--glass-highlight) 0 1px 0 inset;
+  --glass-shadow-lift:
+    rgba(18, 24, 38, 0.18) 0 22px 58px -28px,
+    rgba(var(--accent-rgb), 0.18) 0 0 42px -28px,
+    var(--glass-highlight) 0 1px 0 inset;
+  --glass-control: rgba(255, 255, 255, 0.64);
+  --motion-fast: 0.16s;
+  --motion-med: 0.22s;
 
   --radius-sm: 6px;
   --radius-md: 8px;
@@ -156,7 +174,86 @@
     rgba(0, 0, 0, 0.42) 0 18px 54px -22px,
     rgba(var(--accent-rgb), 0.14) 0 0 24px -12px,
     rgba(255, 255, 255, 0.06) 0 1px 0 inset;
+  --glass-surface: rgba(28, 31, 42, 0.58);
+  --glass-surface-strong: rgba(31, 35, 48, 0.78);
+  --glass-fill: color-mix(in srgb, var(--glass-surface) 86%, var(--bg-page));
+  --glass-border: rgba(255, 255, 255, 0.12);
+  --glass-highlight: rgba(255, 255, 255, 0.1);
+  --glass-shadow:
+    rgba(0, 0, 0, 0.34) 0 20px 50px -30px,
+    rgba(0, 0, 0, 0.18) 0 1px 2px,
+    var(--glass-highlight) 0 1px 0 inset;
+  --glass-shadow-lift:
+    rgba(0, 0, 0, 0.48) 0 24px 64px -28px,
+    rgba(var(--accent-rgb), 0.18) 0 0 36px -24px,
+    var(--glass-highlight) 0 1px 0 inset;
+  --glass-control: rgba(31, 35, 48, 0.72);
   color-scheme: dark;
+}
+
+:root[data-appearance='liquid'] {
+  --surface: var(--glass-surface);
+  --surface-strong: var(--glass-surface-strong);
+  --panel-gradient:
+    linear-gradient(180deg, color-mix(in srgb, var(--glass-surface-strong) 94%, transparent), color-mix(in srgb, var(--glass-surface) 88%, transparent));
+  --shadow: var(--glass-shadow);
+  --shadow-lift: var(--glass-shadow-lift);
+}
+
+:root[data-appearance='original'] {
+  --glass-blur: 12px;
+  --glass-saturation: 1.06;
+  --glass-surface: var(--surface);
+  --glass-surface-strong: var(--surface-strong);
+  --glass-fill: var(--surface-strong);
+  --glass-border: var(--border);
+  --glass-highlight: transparent;
+  --glass-shadow: var(--shadow);
+  --glass-shadow-lift: var(--shadow-lift);
+  --glass-control: var(--surface-strong);
+}
+
+:root[data-appearance='minimal'] {
+  --glass-blur: 8px;
+  --glass-saturation: 1;
+  --glass-surface: color-mix(in srgb, var(--surface-strong) 72%, transparent);
+  --glass-surface-strong: color-mix(in srgb, var(--surface-strong) 88%, transparent);
+  --glass-fill: color-mix(in srgb, var(--surface-strong) 82%, var(--bg-page));
+  --glass-border: var(--border);
+  --glass-highlight: transparent;
+  --glass-shadow:
+    rgba(18, 24, 38, 0.08) 0 12px 28px -24px,
+    rgba(18, 24, 38, 0.04) 0 1px 1px;
+  --glass-shadow-lift:
+    rgba(18, 24, 38, 0.12) 0 18px 36px -24px,
+    rgba(var(--accent-rgb), 0.1) 0 0 24px -18px;
+  --glass-control: color-mix(in srgb, var(--surface-strong) 88%, transparent);
+}
+
+:root[data-appearance='contrast'] {
+  --glass-blur: 0px;
+  --glass-saturation: 1;
+  --glass-surface: var(--surface-strong);
+  --glass-surface-strong: var(--surface-strong);
+  --glass-fill: var(--surface-strong);
+  --glass-border: var(--border-strong);
+  --glass-highlight: transparent;
+  --glass-shadow:
+    rgba(18, 24, 38, 0.12) 0 12px 28px -22px;
+  --glass-shadow-lift:
+    rgba(18, 24, 38, 0.18) 0 18px 44px -24px;
+  --glass-control: var(--surface-strong);
+  --border: var(--border-strong);
+}
+
+:root[data-theme='light'][data-appearance='contrast'] {
+  --text: #1f2937;
+  --text-muted: #374151;
+}
+
+:root[data-theme='dark'][data-appearance='contrast'] {
+  --text: rgba(255, 255, 255, 0.86);
+  --text-muted: rgba(255, 255, 255, 0.68);
 }
 
 @keyframes aesthetic-rise {
@@ -237,15 +334,25 @@ select {
   z-index: -1;
   pointer-events: none;
   background:
-    linear-gradient(180deg, rgba(var(--accent-rgb), 0.055), transparent 26rem),
-    linear-gradient(90deg, rgba(var(--accent-rgb), 0.035), transparent 36%),
+    linear-gradient(135deg, rgba(var(--accent-rgb), 0.1), transparent 32rem),
+    linear-gradient(180deg, rgba(255, 255, 255, 0.26), transparent 38rem),
+    linear-gradient(90deg, rgba(var(--accent-hot-rgb), 0.045), transparent 42%),
     var(--bg-page);
 }
 
 :root[data-theme='light'] #root::before {
   background:
-    linear-gradient(180deg, rgba(var(--accent-rgb), 0.052), transparent 26rem),
-    linear-gradient(90deg, rgba(var(--accent-rgb), 0.035), transparent 36%),
+    linear-gradient(135deg, rgba(var(--accent-rgb), 0.1), transparent 32rem),
+    linear-gradient(180deg, rgba(255, 255, 255, 0.3), transparent 38rem),
+    linear-gradient(90deg, rgba(var(--accent-hot-rgb), 0.045), transparent 42%),
+    var(--bg-page);
+}
+
+:root[data-theme='dark'] #root::before {
+  background:
+    linear-gradient(135deg, rgba(var(--accent-rgb), 0.13), transparent 34rem),
+    linear-gradient(180deg, rgba(255, 255, 255, 0.045), transparent 32rem),
+    linear-gradient(90deg, rgba(var(--accent-hot-rgb), 0.055), transparent 44%),
     var(--bg-page);
 }
 
@@ -336,12 +443,13 @@ code {
   text-decoration: none;
   line-height: 1;
   transition:
-    transform 0.16s ease,
-    border-color 0.16s ease,
-    background 0.16s ease,
-    box-shadow 0.16s ease,
-    color 0.16s ease,
-    opacity 0.16s ease;
+    transform var(--motion-fast) ease,
+    border-color var(--motion-fast) ease,
+    background var(--motion-fast) ease,
+    box-shadow var(--motion-fast) ease,
+    color var(--motion-fast) ease,
+    opacity var(--motion-fast) ease,
+    filter var(--motion-fast) ease;
 }
 
 .btn:focus-visible {
@@ -356,21 +464,22 @@ code {
 }
 
 .btn--primary {
-  background: var(--button-primary-mid);
+  background:
+    linear-gradient(180deg, color-mix(in srgb, var(--button-primary-start) 78%, #ffffff), var(--button-primary-mid) 44%, var(--button-primary-end));
   border-color: var(--button-primary-border);
   color: var(--button-primary-text);
   box-shadow:
-    0 8px 18px -16px var(--button-primary-glow),
-    inset 0 1px 0 rgba(255, 255, 255, 0.22);
+    0 14px 32px -22px var(--button-primary-glow),
+    inset 0 1px 0 rgba(255, 255, 255, 0.34);
 }
 
 .btn--primary:hover:not(:disabled) {
-  transform: translateY(-1px);
+  transform: translateY(-1px) scale(1.01);
   border-color: var(--button-primary-border);
-  background: var(--button-primary-end);
+  filter: saturate(1.06);
   box-shadow:
-    0 10px 22px -16px var(--button-primary-glow),
-    inset 0 1px 0 rgba(255, 255, 255, 0.24);
+    0 18px 38px -22px var(--button-primary-glow),
+    inset 0 1px 0 rgba(255, 255, 255, 0.38);
 }
 
 .btn--primary:active:not(:disabled) {
@@ -379,18 +488,20 @@ code {
 }
 
 .btn--ghost {
-  background: color-mix(in srgb, var(--surface) 82%, transparent);
-  backdrop-filter: blur(12px) saturate(1.12);
-  -webkit-backdrop-filter: blur(12px) saturate(1.12);
-  border-color: var(--border);
+  background: var(--glass-control);
+  backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-saturation));
+  -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-saturation));
+  border-color: var(--glass-border);
   color: var(--text-h);
+  box-shadow: rgba(255, 255, 255, 0.28) 0 1px 0 inset;
 }
 
 .btn--ghost:hover:not(:disabled) {
   border-color: var(--accent-border);
-  background: color-mix(in srgb, var(--accent-bg) 62%, var(--surface));
+  background: color-mix(in srgb, var(--accent-bg) 62%, var(--glass-control));
   color: var(--accent-hot);
   transform: translateY(-1px);
+  box-shadow: var(--glass-shadow);
 }
 
 .btn--lg {

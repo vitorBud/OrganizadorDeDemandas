@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom'
 import { Eye, EyeOff } from 'lucide-react'
 import { useAuth } from '../context/AuthContext'
 import { useTheme } from '../context/ThemeContext'
+import { THEME_APPEARANCE_PRESETS } from '../lib/themeAppearance'
 import { THEME_ACCENT_PRESETS } from '../lib/themeAccent'
 import { ACCENT_PRESETS, accentColorForDisplay, normalizeAccentColor } from '../lib/userColor'
 import './ProfileSettings.css'
@@ -17,6 +18,9 @@ export function ProfileSettings() {
     setAccentColor: setThemeAccentColor,
     resetAccentColor,
     defaultAccentColor,
+    appearance,
+    setAppearance,
+    resetAppearance,
   } = useTheme()
   const [hex, setHex] = useState('#2563eb')
   const [themeHex, setThemeHex] = useState(defaultAccentColor)
@@ -90,9 +94,10 @@ export function ProfileSettings() {
 
   const onThemeReset = useCallback(() => {
     resetAccentColor()
+    resetAppearance()
     setThemeHex(defaultAccentColor)
-    setThemeMessage('Tema padrão ativado.')
-  }, [defaultAccentColor, resetAccentColor])
+    setThemeMessage('Tema padrão Liquid Glass ativado.')
+  }, [defaultAccentColor, resetAccentColor, resetAppearance])
 
   const onPasswordSave = useCallback(async () => {
     // Valida no cliente antes de pedir alteração de senha ao AuthContext.
@@ -199,6 +204,21 @@ export function ProfileSettings() {
             <strong style={{ color: themePreview }}>Cor principal</strong>
             <span>{themePreview}</span>
           </div>
+        </div>
+
+        <div className="profile-settings__appearance" role="group" aria-label="Estilo visual">
+          {THEME_APPEARANCE_PRESETS.map((preset) => (
+            <button
+              key={preset.id}
+              type="button"
+              className={`profile-settings__appearance-option${appearance === preset.id ? ' profile-settings__appearance-option--active' : ''}`}
+              onClick={() => setAppearance(preset.id)}
+              aria-pressed={appearance === preset.id}
+            >
+              <strong>{preset.label}</strong>
+              <span>{preset.description}</span>
+            </button>
+          ))}
         </div>
 
         <div className="profile-settings__presets" role="group" aria-label="Temas sugeridos">

@@ -1,5 +1,6 @@
 .project-posts {
   text-align: left;
+  animation: aesthetic-rise var(--motion-med) ease both;
 }
 
 .project-posts__head {
@@ -35,12 +36,24 @@
 }
 
 .project-posts .card-block {
-  border: 1px solid var(--border);
+  border: 1px solid var(--glass-border);
   border-radius: var(--radius-md);
   padding: 15px 16px;
   margin-bottom: 12px;
-  background: var(--surface-strong);
-  box-shadow: 0 14px 36px rgba(15, 18, 30, 0.07);
+  background: color-mix(in srgb, var(--glass-surface-strong) 90%, transparent);
+  box-shadow: var(--glass-shadow);
+  backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-saturation));
+  -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-saturation));
+  transition:
+    transform var(--motion-fast) ease,
+    border-color var(--motion-fast) ease,
+    box-shadow var(--motion-fast) ease;
+}
+
+.project-posts__item.card-block:hover {
+  transform: translateY(-2px);
+  border-color: var(--border-strong);
+  box-shadow: var(--glass-shadow-lift);
 }
 
 .project-posts__composer-title {
@@ -63,9 +76,9 @@
 .project-posts__link-tools input {
   font: inherit;
   padding: 10px 12px;
-  border: 1px solid var(--border);
+  border: 1px solid var(--glass-border);
   border-radius: var(--radius-sm);
-  background: color-mix(in srgb, var(--bg) 84%, transparent);
+  background: color-mix(in srgb, var(--glass-control) 82%, transparent);
   color: var(--text-h);
 }
 
@@ -107,11 +120,13 @@
   gap: 7px;
   padding: 6px 9px;
   border-radius: var(--radius-sm);
-  border: 1px solid var(--border);
+  border: 1px solid var(--glass-border);
   color: var(--text);
-  background: color-mix(in srgb, var(--surface) 86%, transparent);
+  background: color-mix(in srgb, var(--glass-control) 86%, transparent);
   font-size: 0.86rem;
   font-weight: 800;
+  backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-saturation));
+  -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-saturation));
 }
 
 .project-posts__tools[open] summary {
@@ -125,9 +140,11 @@
   gap: 10px;
   margin-top: 9px;
   padding: 10px;
-  border: 1px solid var(--border);
+  border: 1px solid var(--glass-border);
   border-radius: var(--radius-md);
-  background: color-mix(in srgb, var(--bg) 72%, var(--surface-strong));
+  background: color-mix(in srgb, var(--glass-surface) 78%, var(--surface-strong));
+  box-shadow: var(--glass-shadow);
+  animation: aesthetic-rise var(--motion-med) ease both;
 }
 
 .project-posts__tools-row,
@@ -224,7 +241,14 @@
   border: 1px solid var(--border);
   border-radius: var(--radius-sm);
   color: var(--text-muted);
-  background: color-mix(in srgb, var(--surface) 86%, transparent);
+  background: color-mix(in srgb, var(--glass-control) 86%, transparent);
+  backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-saturation));
+  -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-saturation));
+  transition:
+    transform var(--motion-fast) ease,
+    border-color var(--motion-fast) ease,
+    background var(--motion-fast) ease,
+    color var(--motion-fast) ease;
 }
 
 .project-posts__item-actions[open] summary,
@@ -232,6 +256,7 @@
   color: var(--text-h);
   border-color: var(--accent-border);
   background: color-mix(in srgb, var(--accent-bg) 44%, var(--surface-strong));
+  transform: translateY(-1px);
 }
 
 .project-posts__item-menu {
@@ -244,10 +269,13 @@
   display: grid;
   gap: 4px;
   padding: 6px;
-  border: 1px solid var(--border);
+  border: 1px solid var(--glass-border);
   border-radius: var(--radius-md);
-  background: var(--surface-strong);
-  box-shadow: 0 18px 44px rgba(15, 18, 30, 0.14);
+  background: var(--glass-surface-strong);
+  backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-saturation));
+  -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-saturation));
+  box-shadow: var(--glass-shadow-lift);
+  animation: aesthetic-rise var(--motion-med) ease both;
 }
 
 .project-posts__item-menu .btn {
@@ -257,7 +285,7 @@
 
 .project-posts__body {
   margin: 0;
-  line-height: 1.52;
+  line-height: 1.58;
   color: var(--text-h);
   font-size: 0.94rem;
 }
@@ -287,11 +315,16 @@
   font-weight: 800;
   text-decoration: none;
   border-bottom: 1px solid color-mix(in srgb, var(--accent-hot) 42%, transparent);
+  transition:
+    color var(--motion-fast) ease,
+    border-color var(--motion-fast) ease,
+    background var(--motion-fast) ease;
 }
 
 .project-posts__body a:hover {
   color: var(--accent);
   border-bottom-color: currentColor;
+  background: color-mix(in srgb, var(--accent-bg) 48%, transparent);
 }
 
 @media (max-width: 720px) {

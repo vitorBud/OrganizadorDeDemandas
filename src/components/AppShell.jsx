@@ -8,6 +8,7 @@ import {
   LogOut,
   MonitorCog,
   Settings,
+  Sparkles,
   UserCircle,
   Wifi,
 } from 'lucide-react'
@@ -15,6 +16,7 @@ import { useAuth } from '../context/AuthContext'
 import { useTheme } from '../context/ThemeContext'
 import { useRealtimeStatus } from '../context/RealtimeStatusContext'
 import { isRemoteCollab } from '../lib/collabApi'
+import { THEME_APPEARANCE_PRESETS } from '../lib/themeAppearance'
 import { listMyNotifications, markNotificationsRead, subscribeNotificationChannel } from '../lib/tasksApi'
 import { accentColorForDisplay } from '../lib/userColor'
 import './AppShell.css'
@@ -24,7 +26,7 @@ import './AppShell.css'
  */
 export function AppShell() {
   const { user, userId, logout } = useAuth()
-  const { preference, setPreference, effective } = useTheme()
+  const { preference, setPreference, effective, appearance, setAppearance } = useTheme()
   const realtimeStatus = useRealtimeStatus()
   const navigate = useNavigate()
   const location = useLocation()
@@ -244,6 +246,22 @@ export function AppShell() {
                       <option value="system">Sistema ({effective === 'dark' ? 'escuro' : 'claro'})</option>
                       <option value="light">Claro</option>
                       <option value="dark">Escuro</option>
+                    </select>
+                  </label>
+                  <label className="app-shell__theme">
+                    <Sparkles size={16} strokeWidth={2.1} aria-hidden />
+                    <span className="visually-hidden">Estilo visual</span>
+                    <select
+                      value={appearance}
+                      onChange={(e) => setAppearance(e.target.value)}
+                      className="app-shell__theme-select"
+                      aria-label="Estilo visual"
+                    >
+                      {THEME_APPEARANCE_PRESETS.map((preset) => (
+                        <option key={preset.id} value={preset.id}>
+                          {preset.label}
+                        </option>
+                      ))}
                     </select>
                   </label>
                   <button type="button" className="app-shell__account-link" onClick={() => void handleLogout()}>

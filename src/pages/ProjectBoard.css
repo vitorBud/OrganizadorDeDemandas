@@ -10,9 +10,11 @@
   line-height: 1.4;
   text-align: left;
   border-radius: var(--radius-sm);
-  border: 1px solid var(--border);
-  background: color-mix(in srgb, var(--surface) 70%, transparent);
+  border: 1px solid var(--glass-border);
+  background: color-mix(in srgb, var(--glass-control) 72%, transparent);
   color: var(--text-muted);
+  backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-saturation));
+  -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-saturation));
 }
 
 .project-board__top {
@@ -51,9 +53,9 @@
   align-items: center;
   gap: 8px;
   padding: 6px 12px;
-  border: 1px solid var(--border);
+  border: 1px solid var(--glass-border);
   border-radius: var(--radius-sm);
-  background: color-mix(in srgb, var(--surface) 82%, transparent);
+  background: var(--glass-control);
   color: var(--text-h);
   font-size: 0.92rem;
   font-weight: 800;
@@ -80,10 +82,13 @@
   width: min(560px, calc(100vw - 44px));
   margin-top: 8px;
   padding: 12px;
-  border: 1px solid var(--border);
+  border: 1px solid var(--glass-border);
   border-radius: var(--radius-md);
-  background: var(--surface-strong);
-  box-shadow: var(--shadow-lift);
+  background: var(--glass-surface-strong);
+  box-shadow: var(--glass-shadow-lift);
+  backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-saturation));
+  -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-saturation));
+  animation: aesthetic-rise var(--motion-med) ease both;
 }
 
 .project-board__code-row {
@@ -125,9 +130,9 @@
 .project-board__members {
   margin-top: 12px;
   padding: 12px;
-  border: 1px solid var(--border);
+  border: 1px solid var(--glass-border);
   border-radius: var(--radius-md);
-  background: color-mix(in srgb, var(--bg) 72%, transparent);
+  background: color-mix(in srgb, var(--glass-control) 72%, transparent);
 }
 
 .project-board__members-title {
@@ -159,9 +164,12 @@
   gap: 6px;
   padding: 4px;
   margin-bottom: 16px;
-  border: 1px solid var(--border);
+  border: 1px solid var(--glass-border);
   border-radius: var(--radius-md);
-  background: color-mix(in srgb, var(--surface) 84%, transparent);
+  background: var(--glass-control);
+  backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-saturation));
+  -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-saturation));
+  box-shadow: var(--glass-shadow);
 }
 
 .project-board__tab {
@@ -175,11 +183,15 @@
   background: transparent;
   color: var(--text-muted);
   cursor: pointer;
+  transition:
+    background var(--motion-fast) ease,
+    color var(--motion-fast) ease,
+    border-color var(--motion-fast) ease;
 }
 
 .project-board__tab:hover {
   color: var(--text-h);
-  background: color-mix(in srgb, var(--surface) 78%, transparent);
+  background: color-mix(in srgb, var(--glass-control) 78%, transparent);
 }
 
 .project-board__tab--active {
@@ -216,12 +228,12 @@
   gap: 8px;
   margin-bottom: 16px;
   padding: 14px;
-  border: 1px solid var(--border);
+  border: 1px solid var(--glass-border);
   border-radius: var(--radius-lg);
   background: var(--panel-gradient);
-  backdrop-filter: blur(14px) saturate(1.12);
-  -webkit-backdrop-filter: blur(14px) saturate(1.12);
-  box-shadow: var(--shadow);
+  backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-saturation));
+  -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-saturation));
+  box-shadow: var(--glass-shadow);
 }
 
 .project-board__toolbar-label {
@@ -251,19 +263,23 @@
 }
 
 .block-card {
-  border: 1px solid var(--border);
+  border: 1px solid var(--glass-border);
   border-radius: var(--radius-lg);
   padding: 14px;
   background: var(--panel-gradient);
-  box-shadow: var(--shadow);
+  box-shadow: var(--glass-shadow);
+  backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-saturation));
+  -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-saturation));
   transition:
-    border-color 0.2s ease,
-    box-shadow 0.2s ease;
+    border-color var(--motion-fast) ease,
+    box-shadow var(--motion-fast) ease,
+    transform var(--motion-fast) ease;
 }
 
 .block-card:focus-within {
   border-color: var(--accent-border);
-  box-shadow: var(--shadow-lift);
+  box-shadow: var(--glass-shadow-lift);
+  transform: translateY(-1px);
 }
 
 .block-card__controls {
@@ -309,9 +325,9 @@
 .block-card__code,
 .project-board__chat-input {
   font: inherit;
-  border: 1px solid var(--border);
+  border: 1px solid var(--glass-border);
   border-radius: var(--radius-sm);
-  background: color-mix(in srgb, var(--bg) 84%, transparent);
+  background: color-mix(in srgb, var(--glass-control) 84%, transparent);
   color: var(--text-h);
 }
 
@@ -407,14 +423,16 @@
 .project-board__chat {
   position: sticky;
   top: 76px;
-  border: 1px solid var(--border);
+  border: 1px solid var(--glass-border);
   border-radius: var(--radius-lg);
   padding: 16px;
-  background: var(--surface-strong);
+  background: var(--glass-surface-strong);
+  backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-saturation));
+  -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-saturation));
   display: flex;
   flex-direction: column;
   max-height: min(74vh, 680px);
-  box-shadow: var(--shadow);
+  box-shadow: var(--glass-shadow);
 }
 
 .project-board__chat-title {
@@ -442,8 +460,8 @@
   gap: 2px;
   padding: 9px 10px;
   border-radius: var(--radius-sm);
-  background: color-mix(in srgb, var(--bg) 84%, transparent);
-  border: 1px solid var(--border);
+  background: color-mix(in srgb, var(--glass-control) 84%, transparent);
+  border: 1px solid var(--glass-border);
   text-align: left;
 }
 

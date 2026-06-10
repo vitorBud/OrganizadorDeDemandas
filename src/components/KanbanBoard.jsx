@@ -85,7 +85,7 @@ function SortableTaskCard({ task, members, commentCount, onOpen }) {
     opacity: isDragging ? 0.45 : 1,
     borderColor: priorityColor,
     borderLeftWidth: '4px',
-    ...(barColor ? { boxShadow: `inset 0 0 0 1px ${barColor}22, var(--shadow)` } : {}),
+    ...(barColor ? { boxShadow: `inset 0 0 0 1px ${barColor}22, var(--glass-shadow)` } : {}),
   }
 
   return (
