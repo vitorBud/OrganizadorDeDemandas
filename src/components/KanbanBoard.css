@@ -23,10 +23,12 @@
   flex-direction: column;
   gap: 10px;
   margin-bottom: 12px;
-  padding: 10px;
+  padding: 12px;
   border: 1px solid var(--glass-border);
-  border-radius: var(--radius-md);
-  background: color-mix(in srgb, var(--glass-surface) 84%, transparent);
+  border-radius: var(--radius-lg);
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.64), rgba(255, 255, 255, 0.42)),
+    var(--glass-fill);
   backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-saturation));
   -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-saturation));
   box-shadow: var(--glass-shadow);
@@ -45,6 +47,17 @@
   gap: 8px;
   align-items: center;
   flex: 1 1 360px;
+  padding: 4px;
+  border: 1px solid var(--glass-border);
+  border-radius: var(--radius-pill);
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.64), rgba(255, 255, 255, 0.42)),
+    var(--glass-fill);
+  box-shadow:
+    rgba(28, 42, 66, 0.1) 0 16px 34px -26px,
+    rgba(255, 255, 255, 0.9) 0 1px 0 inset;
+  backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-saturation));
+  -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-saturation));
 }
 
 .kanban-new__input {
@@ -52,17 +65,62 @@
   min-width: 0;
   min-height: 38px;
   font: inherit;
-  padding: 9px 11px;
-  border-radius: var(--radius-sm);
-  border: 1px solid var(--glass-border);
-  background: color-mix(in srgb, var(--glass-control) 82%, transparent);
+  padding: 9px 13px;
+  border-radius: var(--radius-pill);
+  border: 1px solid transparent;
+  background: transparent;
   color: var(--text-h);
+}
+
+.kanban-new__input::placeholder {
+  color: var(--text-muted);
 }
 
 .kanban-new__input:focus {
   outline: none;
-  border-color: var(--accent-border);
-  box-shadow: 0 0 0 3px var(--accent-bg);
+  border-color: transparent;
+  box-shadow: none;
+}
+
+.kanban-new:focus-within {
+  border-color: color-mix(in srgb, var(--text-muted) 32%, var(--glass-border));
+  box-shadow:
+    rgba(28, 42, 66, 0.15) 0 18px 42px -26px,
+    0 0 0 4px rgba(255, 255, 255, 0.28),
+    rgba(255, 255, 255, 0.95) 0 1px 0 inset;
+}
+
+.kanban-new .btn {
+  min-height: 36px;
+  border-radius: var(--radius-pill);
+  box-shadow:
+    rgba(var(--accent-rgb), 0.22) 0 16px 28px -22px,
+    rgba(255, 255, 255, 0.42) 0 1px 0 inset;
+}
+
+:root[data-theme='dark'] .kanban-new {
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.08), rgba(255, 255, 255, 0.035)),
+    var(--glass-fill);
+  border-color: rgba(255, 255, 255, 0.14);
+  box-shadow:
+    rgba(0, 0, 0, 0.28) 0 18px 42px -28px,
+    rgba(255, 255, 255, 0.1) 0 1px 0 inset;
+}
+
+:root[data-theme='dark'] .kanban-new__input {
+  color: #ffffff;
+}
+
+:root[data-theme='dark'] .kanban-new__input::placeholder {
+  color: rgba(255, 255, 255, 0.54);
+}
+
+:root[data-theme='dark'] .kanban-toolbar {
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.08), rgba(255, 255, 255, 0.035)),
+    var(--glass-fill);
+  border-color: rgba(255, 255, 255, 0.12);
 }
 
 .kanban-filters {
@@ -72,8 +130,10 @@
   align-items: flex-end;
   padding: 10px 11px;
   border: 1px solid var(--glass-border);
-  border-radius: var(--radius-md);
-  background: color-mix(in srgb, var(--glass-surface-strong) 88%, transparent);
+  border-radius: var(--radius-lg);
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.66), rgba(255, 255, 255, 0.38)),
+    color-mix(in srgb, var(--glass-surface-strong) 88%, transparent);
   box-shadow: var(--glass-shadow);
   backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-saturation));
   -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-saturation));
@@ -102,7 +162,7 @@
   min-height: 34px;
   font: inherit;
   padding: 7px 9px;
-  border-radius: var(--radius-sm);
+  border-radius: var(--radius-pill);
   border: 1px solid var(--glass-border);
   background: color-mix(in srgb, var(--bg) 84%, transparent);
   color: var(--text-h);
@@ -117,29 +177,39 @@
 
 .kanban-columns {
   display: flex;
-  gap: 12px;
+  gap: 16px;
   overflow-x: auto;
-  padding: 2px 2px 12px;
+  padding: 4px 2px 18px;
   scroll-snap-type: x proximity;
 }
 
 .kanban-column {
-  flex: 0 0 min(270px, 82vw);
+  flex: 0 0 min(306px, 84vw);
   scroll-snap-align: start;
   border: 1px solid var(--glass-border);
-  border-radius: var(--radius-md);
+  border-radius: var(--radius-lg);
   background:
-    linear-gradient(180deg, color-mix(in srgb, var(--glass-surface-strong) 82%, transparent), color-mix(in srgb, var(--glass-surface) 84%, transparent));
-  min-height: 232px;
+    linear-gradient(180deg, rgba(255, 255, 255, 0.66), rgba(255, 255, 255, 0.36)),
+    color-mix(in srgb, var(--glass-surface) 84%, transparent);
+  min-height: 360px;
   display: flex;
   flex-direction: column;
-  box-shadow: var(--glass-shadow);
+  overflow: hidden;
+  box-shadow:
+    rgba(28, 42, 66, 0.16) 0 22px 58px -34px,
+    rgba(255, 255, 255, 0.9) 0 1px 0 inset;
   backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-saturation));
   -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-saturation));
   transition:
     transform var(--motion-med) ease,
     border-color var(--motion-fast) ease,
     box-shadow var(--motion-fast) ease;
+}
+
+:root[data-theme='dark'] .kanban-column {
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.08), rgba(255, 255, 255, 0.035)),
+    color-mix(in srgb, var(--glass-surface) 84%, transparent);
 }
 
 .kanban-column--over {
@@ -150,13 +220,34 @@
 }
 
 .kanban-column__head {
+  position: sticky;
+  top: 0;
+  z-index: 2;
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 10px;
-  padding: 9px 10px;
+  padding: 11px 12px;
   border-bottom: 1px solid var(--glass-border);
-  background: color-mix(in srgb, var(--glass-control) 76%, transparent);
+  background:
+    linear-gradient(90deg, rgba(var(--kanban-col-rgb, 0, 122, 255), 0.9), rgba(var(--kanban-col-rgb, 0, 122, 255), 0.72)),
+    color-mix(in srgb, var(--glass-control) 76%, transparent);
+}
+
+.kanban-column:nth-child(1) {
+  --kanban-col-rgb: 0, 199, 190;
+}
+
+.kanban-column:nth-child(2) {
+  --kanban-col-rgb: 0, 122, 255;
+}
+
+.kanban-column:nth-child(3) {
+  --kanban-col-rgb: 255, 159, 10;
+}
+
+.kanban-column:nth-child(4) {
+  --kanban-col-rgb: 52, 199, 89;
 }
 
 .kanban-column__title {
@@ -164,7 +255,7 @@
   font-size: 0.82rem;
   font-weight: 800;
   margin: 0;
-  color: var(--text-h);
+  color: #ffffff;
   min-width: 0;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -178,16 +269,16 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  border: 1px solid var(--accent-border);
-  border-radius: var(--radius-sm);
-  background: var(--accent-bg);
-  color: var(--accent-hot);
+  border: 1px solid rgba(255, 255, 255, 0.5);
+  border-radius: var(--radius-pill);
+  background: rgba(255, 255, 255, 0.22);
+  color: #ffffff;
   font-size: 0.76rem;
   font-weight: 800;
 }
 
 .kanban-column__body {
-  padding: 8px;
+  padding: 11px;
   flex: 1;
   display: flex;
   flex-direction: column;
@@ -200,7 +291,7 @@
   padding: 0;
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: 10px;
 }
 
 .kanban-column__empty {
@@ -210,25 +301,33 @@
   text-align: center;
   padding: 10px 8px;
   border: 1px dashed var(--border);
-  border-radius: var(--radius-sm);
-  background: color-mix(in srgb, var(--glass-control) 48%, transparent);
+  border-radius: var(--radius-md);
+  background: color-mix(in srgb, var(--glass-control) 62%, transparent);
 }
 
 .kanban-card {
   position: relative;
   border: 1px solid var(--border);
-  border-radius: var(--radius-sm);
-  padding: 8px;
-  background: color-mix(in srgb, var(--surface-strong) 96%, var(--bg-page));
+  border-radius: 18px;
+  padding: 10px;
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.88), rgba(255, 255, 255, 0.66)),
+    color-mix(in srgb, var(--surface-strong) 96%, var(--bg-page));
   box-shadow:
-    rgba(18, 24, 38, 0.09) 0 12px 24px -20px,
-    rgba(255, 255, 255, 0.55) 0 1px 0 inset;
+    rgba(28, 42, 66, 0.16) 0 16px 34px -24px,
+    rgba(255, 255, 255, 0.82) 0 1px 0 inset;
   cursor: default;
   transition:
     border-color var(--motion-fast) ease,
     box-shadow var(--motion-fast) ease,
     transform var(--motion-fast) ease,
     background var(--motion-fast) ease;
+}
+
+:root[data-theme='dark'] .kanban-card {
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.08), rgba(255, 255, 255, 0.04)),
+    color-mix(in srgb, var(--surface-strong) 96%, var(--bg-page));
 }
 
 .kanban-card:hover {
@@ -274,7 +373,7 @@
   justify-content: center;
   cursor: grab;
   border: 1px solid var(--border);
-  border-radius: var(--radius-sm);
+  border-radius: var(--radius-pill);
   background: color-mix(in srgb, var(--glass-control) 78%, transparent);
   color: var(--text-muted);
   padding: 0;
@@ -305,7 +404,7 @@
   font-size: 0.74rem;
   font-weight: 800;
   border: 1px solid var(--accent-border);
-  border-radius: var(--radius-sm);
+  border-radius: var(--radius-pill);
   padding: 0;
   background: var(--accent-bg);
   color: var(--accent-hot);
@@ -335,7 +434,7 @@
   align-items: center;
   gap: 5px;
   border: 1px solid var(--border);
-  border-radius: var(--radius-sm);
+  border-radius: var(--radius-pill);
   background: color-mix(in srgb, var(--glass-control) 72%, transparent);
   color: var(--text);
   font-size: 0.72rem;

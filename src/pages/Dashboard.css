@@ -1,6 +1,6 @@
 .dashboard {
   text-align: left;
-  max-width: 1180px;
+  max-width: 1280px;
   margin: 0 auto;
   animation: aesthetic-rise var(--motion-med) ease both;
 }
@@ -74,7 +74,7 @@
   font-size: 0.92rem;
   font-weight: 700;
   padding: 7px 13px;
-  border-radius: var(--radius-sm);
+  border-radius: var(--radius-pill);
   border: 1px solid var(--glass-border);
   background: var(--glass-control);
   color: var(--text-h);
@@ -111,16 +111,32 @@
   position: relative;
   border: 1px solid var(--glass-border);
   border-radius: var(--radius-lg);
-  padding: 18px 20px;
-  margin-bottom: 16px;
-  background: var(--panel-gradient);
-  box-shadow: var(--glass-shadow);
+  padding: 20px;
+  margin-bottom: 18px;
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.72), rgba(255, 255, 255, 0.42)),
+    var(--panel-gradient);
+  box-shadow:
+    rgba(28, 42, 66, 0.16) 0 24px 64px -36px,
+    rgba(255, 255, 255, 0.92) 0 1px 0 inset;
   backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-saturation));
   -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-saturation));
   transition:
     border-color var(--motion-fast) ease,
     box-shadow var(--motion-fast) ease,
     transform var(--motion-fast) ease;
+}
+
+:root[data-theme='dark'] .card-block {
+  background:
+    radial-gradient(circle at 12% 0%, rgba(53, 195, 208, 0.24), transparent 44%),
+    linear-gradient(135deg, rgba(139, 116, 255, 0.18), rgba(35, 116, 190, 0.16) 52%, rgba(22, 145, 122, 0.14)),
+    rgba(11, 44, 75, 0.44);
+  border-color: rgba(90, 210, 255, 0.18);
+  box-shadow:
+    rgba(53, 195, 208, 0.18) 0 24px 64px -38px,
+    rgba(139, 116, 255, 0.14) 0 0 38px -28px,
+    rgba(255, 255, 255, 0.1) 0 1px 0 inset;
 }
 
 .card-block:hover {
@@ -135,7 +151,8 @@
   inset: 0;
   pointer-events: none;
   border-radius: inherit;
-  border-left: 2px solid color-mix(in srgb, var(--accent) 48%, transparent);
+  border: 1px solid rgba(255, 255, 255, 0.34);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.44);
 }
 
 .card-block h2 {
@@ -159,7 +176,7 @@
 
 .dashboard__charts {
   display: grid;
-  gap: 16px;
+  gap: 18px;
 }
 
 @media (min-width: 900px) {
@@ -171,14 +188,17 @@
 
 .dashboard__chart-inner {
   position: relative;
-  height: 280px;
-  margin-top: 12px;
-  padding: 10px;
+  height: 300px;
+  margin-top: 14px;
+  padding: 14px;
   border: 1px solid var(--glass-border);
-  border-radius: var(--radius-md);
+  border-radius: 20px;
   background:
-    linear-gradient(180deg, color-mix(in srgb, var(--glass-control) 80%, transparent), color-mix(in srgb, var(--bg) 74%, transparent));
-  box-shadow: rgba(255, 255, 255, 0.32) 0 1px 0 inset;
+    linear-gradient(180deg, rgba(255, 255, 255, 0.72), rgba(255, 255, 255, 0.36)),
+    color-mix(in srgb, var(--glass-control) 80%, transparent);
+  box-shadow:
+    rgba(28, 42, 66, 0.1) 0 18px 40px -30px,
+    rgba(255, 255, 255, 0.7) 0 1px 0 inset;
 }
 
 .dashboard__chart-inner--bar {
@@ -196,25 +216,49 @@
   margin: 12px 0 0;
   padding: 0;
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
-  gap: 12px;
+  grid-template-columns: repeat(auto-fill, minmax(170px, 1fr));
+  gap: 14px;
+}
+
+:root[data-theme='dark'] .dashboard__chart-inner {
+  background:
+    radial-gradient(circle at 20% 0%, rgba(53, 195, 208, 0.18), transparent 42%),
+    linear-gradient(145deg, rgba(139, 116, 255, 0.16), rgba(15, 109, 170, 0.18) 58%, rgba(24, 130, 112, 0.14)),
+    rgba(8, 50, 86, 0.42);
+  border-color: rgba(90, 210, 255, 0.18);
+  box-shadow:
+    rgba(53, 195, 208, 0.14) 0 20px 52px -34px,
+    rgba(255, 255, 255, 0.08) 0 1px 0 inset;
 }
 
 .dashboard__kpi-grid li {
-  padding: 14px;
-  border-radius: var(--radius-md);
+  padding: 16px;
+  border-radius: 22px;
   border: 1px solid var(--glass-border);
   background:
-    linear-gradient(180deg, color-mix(in srgb, var(--glass-control) 86%, transparent), color-mix(in srgb, var(--glass-surface) 72%, transparent));
+    linear-gradient(135deg, rgba(var(--accent-rgb), 0.13), transparent 68%),
+    linear-gradient(180deg, rgba(255, 255, 255, 0.74), rgba(255, 255, 255, 0.36)),
+    color-mix(in srgb, var(--glass-surface) 72%, transparent);
   display: flex;
   flex-direction: column;
   gap: 4px;
   box-shadow: rgba(255, 255, 255, 0.28) 0 1px 0 inset;
 }
 
+:root[data-theme='dark'] .dashboard__kpi-grid li {
+  background:
+    radial-gradient(circle at 18% 0%, rgba(53, 195, 208, 0.22), transparent 44%),
+    linear-gradient(135deg, rgba(139, 116, 255, 0.2), rgba(18, 115, 180, 0.18) 54%, rgba(22, 145, 122, 0.16)),
+    rgba(10, 55, 92, 0.46);
+  border-color: rgba(90, 210, 255, 0.18);
+  box-shadow:
+    rgba(53, 195, 208, 0.16) 0 20px 48px -34px,
+    rgba(255, 255, 255, 0.09) 0 1px 0 inset;
+}
+
 .dashboard__kpi-value {
   font-family: var(--font-display);
-  font-size: 1.55rem;
+  font-size: 1.85rem;
   font-weight: 800;
   color: var(--accent-hot);
   font-variant-numeric: tabular-nums;
@@ -242,13 +286,35 @@
   text-decoration: none;
   color: var(--text-h);
   padding: 11px 12px;
-  border-radius: var(--radius-sm);
+  border-radius: var(--radius-md);
   border: 1px solid var(--glass-border);
   background: color-mix(in srgb, var(--glass-control) 78%, transparent);
   transition:
     border-color var(--motion-fast) ease,
     transform var(--motion-fast) ease,
     background var(--motion-fast) ease;
+}
+
+:root[data-theme='dark'] .dashboard__filter-chip {
+  background:
+    linear-gradient(135deg, rgba(139, 116, 255, 0.18), rgba(53, 195, 208, 0.14)),
+    rgba(8, 56, 94, 0.42);
+  border-color: rgba(90, 210, 255, 0.16);
+}
+
+:root[data-theme='dark'] .dashboard__filter-chip--active {
+  background:
+    linear-gradient(135deg, rgba(139, 116, 255, 0.34), rgba(53, 195, 208, 0.22)),
+    rgba(12, 76, 126, 0.46);
+  border-color: rgba(169, 155, 255, 0.5);
+  color: #ffffff;
+}
+
+:root[data-theme='dark'] .dashboard__overdue a {
+  background:
+    linear-gradient(135deg, rgba(255, 51, 102, 0.18), rgba(53, 195, 208, 0.1)),
+    rgba(80, 18, 50, 0.34);
+  border-color: rgba(255, 92, 130, 0.22);
 }
 
 .dashboard__overdue a:hover {
