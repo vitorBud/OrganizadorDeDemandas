@@ -1,5 +1,7 @@
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
+import { createPortal } from 'react-dom'
 import { Link, useNavigate, useParams, useSearchParams } from 'react-router-dom'
+import { MessageCircle, X } from 'lucide-react'
 import { useAuth } from '../context/AuthContext'
 import {
   getProjectIfMember,
@@ -28,6 +30,8 @@ export function ProjectBoard() {
   const navigate = useNavigate()
   const [project, setProject] = useState(null)
   const [chatDraft, setChatDraft] = useState('')
+  const [chatOpen, setChatOpen] = useState(false)
+  const [topbarSlot, setTopbarSlot] = useState(null)
   const [copied, setCopied] = useState(false)
   const lastWriteRef = useRef(0)
   const projectRef = useRef(null)
@@ -53,6 +57,10 @@ export function ProjectBoard() {
   )
 
   const displayTab = openTaskId ? 'demandas' : workspaceTab
+
+  useEffect(() => {
+    setTopbarSlot(document.getElementById('app-shell-project-tools'))
+  }, [])
 
   useEffect(() => {
     // Ref mantém a versão atual do projeto disponível sem disparar render.
@@ -274,10 +282,20 @@ export function ProjectBoard() {
   }, [project])
 
   useLayoutEffect(() => {
+    if (!chatOpen) return
     const el = messagesListRef.current
     if (!el) return
     el.scrollTo({ top: el.scrollHeight, behavior: 'auto' })
-  }, [chatScrollSig])
+  }, [chatScrollSig, chatOpen])
+
+  useEffect(() => {
+    if (!chatOpen) return
+    const onKey = (event) => {
+      if (event.key === 'Escape') setChatOpen(false)
+    }
+    window.addEventListener('keydown', onKey)
+    return () => window.removeEventListener('keydown', onKey)
+  }, [chatOpen])
 
   if (!project) {
     return (
@@ -287,8 +305,25 @@ export function ProjectBoard() {
     )
   }
 
+  const chatButton = (
+    <button
+      type="button"
+      className={`project-board__chat-toggle${chatOpen ? ' project-board__chat-toggle--active' : ''}`}
+      onClick={() => setChatOpen((v) => !v)}
+      aria-expanded={chatOpen}
+      aria-label="Abrir chat do projeto"
+      title="Chat"
+    >
+      <MessageCircle size={17} strokeWidth={2.2} aria-hidden />
+      {messages.length > 0 ? (
+        <span className="project-board__chat-count">{messages.length}</span>
+      ) : null}
+    </button>
+  )
+
   return (
     <div className="project-board">
+      {topbarSlot ? createPortal(chatButton, topbarSlot) : null}
       {remote ? (
         <p className="project-board__live-banner">
           Sala online: alterações e chat sincronizam entre quem está com o mesmo código (Realtime
@@ -302,6 +337,7 @@ export function ProjectBoard() {
         </Link>
         <div className="project-board__head">
           <h1 className="project-board__title">{project.name}</h1>
+          {!topbarSlot ? chatButton : null}
           <details className="project-board__options">
             <summary>Opções do grupo</summary>
             <div className="project-board__options-panel">
@@ -361,6 +397,60 @@ export function ProjectBoard() {
         </div>
       </div>
 
+      {chatOpen ? (
+        <div className="project-board__chat-popover" role="dialog" aria-label="Chat do projeto">
+          <header className="project-board__chat-head">
+            <div>
+              <h2 className="project-board__chat-title">Chat</h2>
+              <p className="project-board__chat-subtitle">{project.name}</p>
+            </div>
+            <button
+              type="button"
+              className="project-board__chat-close"
+              onClick={() => setChatOpen(false)}
+              aria-label="Fechar chat"
+              title="Fechar"
+            >
+              <X size={16} strokeWidth={2.2} aria-hidden />
+            </button>
+          </header>
+          <ul ref={messagesListRef} className="project-board__messages">
+            {messages.length === 0 ? (
+              <li className="project-board__msg project-board__msg--empty">
+                Nenhuma mensagem ainda.
+              </li>
+            ) : (
+              messages.map((m) => (
+                <li key={m.id} className="project-board__msg">
+                  <span
+                    className="project-board__msg-author"
+                    style={{ color: accentColorForDisplay(m.userAccentColor, m.userId) }}
+                  >
+                    {m.userName}
+                  </span>
+                  <span className="project-board__msg-text">{m.text}</span>
+                  <time className="project-board__msg-time" dateTime={new Date(m.createdAt).toISOString()}>
+                    {new Date(m.createdAt).toLocaleString()}
+                  </time>
+                </li>
+              ))
+            )}
+          </ul>
+          <form onSubmit={sendChat} className="project-board__chat-form">
+            <textarea
+              value={chatDraft}
+              onChange={(e) => setChatDraft(e.target.value)}
+              placeholder="Mensagem para o time..."
+              rows={2}
+              className="project-board__chat-input"
+            />
+            <button type="submit" className="btn btn--primary btn--sm">
+              Enviar
+            </button>
+          </form>
+        </div>
+      ) : null}
+
       <div className="project-board__tabs" role="tablist" aria-label="Visualização do projeto">
         <button
           type="button"
@@ -411,38 +501,6 @@ export function ProjectBoard() {
             />
           )}
         </div>
-
-        <aside className="project-board__chat" aria-label="Chat do projeto">
-          <h2 className="project-board__chat-title">Chat</h2>
-          <ul ref={messagesListRef} className="project-board__messages">
-            {messages.map((m) => (
-              <li key={m.id} className="project-board__msg">
-                <span
-                  className="project-board__msg-author"
-                  style={{ color: accentColorForDisplay(m.userAccentColor, m.userId) }}
-                >
-                  {m.userName}
-                </span>
-                <span className="project-board__msg-text">{m.text}</span>
-                <time className="project-board__msg-time" dateTime={new Date(m.createdAt).toISOString()}>
-                  {new Date(m.createdAt).toLocaleString()}
-                </time>
-              </li>
-            ))}
-          </ul>
-          <form onSubmit={sendChat} className="project-board__chat-form">
-            <textarea
-              value={chatDraft}
-              onChange={(e) => setChatDraft(e.target.value)}
-              placeholder="Mensagem para o time…"
-              rows={2}
-              className="project-board__chat-input"
-            />
-            <button type="submit" className="btn btn--primary btn--sm">
-              Enviar
-            </button>
-          </form>
-        </aside>
       </div>
     </div>
   )

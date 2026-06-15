@@ -14,11 +14,21 @@
   flex-direction: column;
   gap: 18px;
   padding: 18px 12px;
-  border-right: 1px solid var(--glass-border);
-  background: var(--glass-fill);
+  border-right: 1px solid color-mix(in srgb, var(--glass-border) 82%, transparent);
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.64), rgba(255, 255, 255, 0.42)),
+    var(--glass-fill);
   backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-saturation));
   -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-saturation));
-  box-shadow: var(--glass-shadow);
+  box-shadow:
+    rgba(18, 24, 38, 0.12) 18px 0 50px -36px,
+    var(--glass-highlight) 1px 0 0 inset;
+}
+
+:root[data-theme='dark'] .app-shell__sidebar {
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.08), rgba(255, 255, 255, 0.035)),
+    var(--glass-fill);
 }
 
 .app-shell__brand {
@@ -110,11 +120,21 @@
   justify-content: space-between;
   gap: 14px;
   padding: 10px clamp(16px, 3vw, 28px);
-  border-bottom: 1px solid var(--border);
-  background: var(--glass-fill);
+  border-bottom: 1px solid color-mix(in srgb, var(--glass-border) 70%, transparent);
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.68), rgba(255, 255, 255, 0.42)),
+    var(--glass-fill);
   backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-saturation));
   -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-saturation));
-  box-shadow: rgba(20, 24, 32, 0.06) 0 10px 34px -30px;
+  box-shadow:
+    rgba(20, 24, 32, 0.12) 0 18px 42px -34px,
+    var(--glass-highlight) 0 1px 0 inset;
+}
+
+:root[data-theme='dark'] .app-shell__topbar {
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.09), rgba(255, 255, 255, 0.035)),
+    var(--glass-fill);
 }
 
 .app-shell__section-title {
@@ -122,6 +142,18 @@
   color: var(--text-h);
   font-size: 0.95rem;
   font-weight: 800;
+}
+
+.app-shell__project-tools {
+  margin-left: auto;
+  display: inline-flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
+.app-shell__project-tools:empty {
+  display: none;
 }
 
 .app-shell__actions {

@@ -1,18 +1,18 @@
 import { normalizeAccentColor } from './userColor'
 
-export const DEFAULT_THEME_ACCENT = '#6d4aff'
+export const DEFAULT_THEME_ACCENT = '#007aff'
 export const THEME_ACCENT_STORAGE_KEY = 'orgdemandas_theme_accent'
 
 export const THEME_ACCENT_PRESETS = [
   DEFAULT_THEME_ACCENT,
-  '#7c3aed',
+  '#5856d6',
   '#2563eb',
-  '#0891b2',
-  '#0d9488',
-  '#16a34a',
-  '#e11d48',
-  '#f97316',
-  '#ca8a04',
+  '#32ade6',
+  '#34c759',
+  '#30d158',
+  '#ff375f',
+  '#ff9f0a',
+  '#8e8e93',
 ]
 
 /** Converte #rrggbb para canais RGB numéricos. */

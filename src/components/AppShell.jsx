@@ -158,6 +158,7 @@ export function AppShell() {
       <div className="app-shell__content">
         <header className="app-shell__topbar">
           <p className="app-shell__section-title">{pageTitle}</p>
+          <div id="app-shell-project-tools" className="app-shell__project-tools" />
           <div className="app-shell__actions">
             {remote ? (
               <div className="app-shell__notif-wrap" ref={notifRef}>
