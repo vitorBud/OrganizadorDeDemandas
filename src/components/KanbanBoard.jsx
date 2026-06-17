@@ -4,6 +4,7 @@ import {
   DragOverlay,
   PointerSensor,
   closestCorners,
+  pointerWithin,
   useSensor,
   useSensors,
   useDroppable,
@@ -43,6 +44,15 @@ import './KanbanBoard.css'
 
 const STATUS_IDS = TASK_STATUSES.map((s) => s.id)
 
+/** Estratégia de colisão customizada para permitir soltar tarefas em colunas vazias. */
+function customCollisionDetection(args) {
+  const pointerCollisions = pointerWithin(args)
+  if (pointerCollisions.length > 0) {
+    return pointerCollisions
+  }
+  return closestCorners(args)
+}
+
 /** Metadados visuais da prioridade, com fallback para média. */
 function priorityMeta(id) {
   return PRIORITIES.find((p) => p.id === id) ?? PRIORITIES[1]
@@ -79,17 +89,23 @@ function SortableTaskCard({ task, members, commentCount, onOpen }) {
     : null
   const barColor = assigneeColor || creatorColor
 
+  const isDone = task.status === 'done'
+
   const style = {
     transform: CSS.Transform.toString(transform),
     transition,
     opacity: isDragging ? 0.45 : 1,
-    borderColor: priorityColor,
-    borderLeftWidth: '4px',
-    ...(barColor ? { boxShadow: `inset 0 0 0 1px ${barColor}22, var(--glass-shadow)` } : {}),
+    borderColor: isDone ? undefined : priorityColor,
+    borderLeftWidth: isDone ? '1px' : '4px',
+    ...(barColor && !isDone ? { boxShadow: `inset 0 0 0 1px ${barColor}22, var(--glass-shadow)` } : {}),
   }
 
   return (
-    <article ref={setNodeRef} style={style} className={`kanban-card${overdue ? ' kanban-card--overdue' : ''}`}>
+    <article
+      ref={setNodeRef}
+      style={style}
+      className={`kanban-card${overdue ? ' kanban-card--overdue' : ''}${isDone ? ' kanban-card--done' : ''}`}
+    >
       <div className="kanban-card__topline">
         <button
           type="button"
@@ -101,10 +117,12 @@ function SortableTaskCard({ task, members, commentCount, onOpen }) {
         >
           <GripVertical size={16} strokeWidth={2.35} aria-hidden />
         </button>
-        <span className="kanban-card__priority-chip" title={`Prioridade: ${pr.label}`}>
-          <span aria-hidden>{pr.emoji}</span>
-          <span>{pr.label}</span>
-        </span>
+        {!isDone && (
+          <span className="kanban-card__priority-chip" title={`Prioridade: ${pr.label}`}>
+            <span aria-hidden>{pr.emoji}</span>
+            <span>{pr.label}</span>
+          </span>
+        )}
         <button
           type="button"
           className="kanban-card__open"
@@ -134,7 +152,7 @@ function SortableTaskCard({ task, members, commentCount, onOpen }) {
             <span
               className="kanban-card__avatar"
               aria-hidden
-              style={{
+              style={isDone ? {} : {
                 background: `${assigneeColor}33`,
                 color: assigneeColor,
                 borderColor: `${assigneeColor}66`,
@@ -142,7 +160,7 @@ function SortableTaskCard({ task, members, commentCount, onOpen }) {
             >
               {(assignee.name || '?').slice(0, 1).toUpperCase()}
             </span>
-            <span className="kanban-card__person-name" style={{ color: assigneeColor }}>
+            <span className="kanban-card__person-name" style={isDone ? {} : { color: assigneeColor }}>
               {assignee.name}
             </span>
           </span>
@@ -553,7 +571,7 @@ export function KanbanBoard({ projectId, user, openTaskId, onOpenTaskId }) {
 
       <DndContext
         sensors={sensors}
-        collisionDetection={closestCorners}
+        collisionDetection={customCollisionDetection}
         onDragStart={handleDragStart}
         onDragCancel={handleDragCancel}
         onDragEnd={handleDragEnd}
@@ -581,12 +599,14 @@ export function KanbanBoard({ projectId, user, openTaskId, onOpenTaskId }) {
         </div>
         <DragOverlay>
           {activeTask ? (
-            <div className="kanban-card kanban-card--overlay">
+            <div className={`kanban-card kanban-card--overlay${activeTask.status === 'done' ? ' kanban-card--done' : ''}`}>
               <div className="kanban-card__topline">
-                <span className="kanban-card__priority-chip">
-                  <span aria-hidden>{priorityMeta(activeTask.priority).emoji}</span>
-                  <span>{priorityMeta(activeTask.priority).label}</span>
-                </span>
+                {activeTask.status !== 'done' && (
+                  <span className="kanban-card__priority-chip">
+                    <span aria-hidden>{priorityMeta(activeTask.priority).emoji}</span>
+                    <span>{priorityMeta(activeTask.priority).label}</span>
+                  </span>
+                )}
               </div>
               <h3 className="kanban-card__title">{activeTask.title}</h3>
             </div>
